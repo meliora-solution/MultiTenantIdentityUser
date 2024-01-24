@@ -1,0 +1,58 @@
+﻿@page "/tenantlist"
+@using AuthPermissions.AdminCode
+@using AuthPermissions.AspNetCore
+@using AuthpServices.Models
+@using AuthpServices.PermissionsCode
+@using Microsoft.EntityFrameworkCore
+
+
+<h3>Tenant List</h3>
+<PageTitle>TenantList</PageTitle>
+
+@rendermode InteractiveServer
+
+@attribute [HasPermission(UserPermissions.TenantList)]
+
+@inject IAuthTenantAdminService auth;
+
+<br />
+@if (tenantNames == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+
+    <FluentDataGrid Items="@tenantNames">
+        <PropertyColumn Property="@(p => p.TenantId)" Sortable="true" />
+        <PropertyColumn Property="@(p => p.TenantName)" Sortable="true" />
+        <PropertyColumn Property="@(p => p.TenantRolesName)" Sortable="true" />
+        <PropertyColumn Property="@(p => p.DataKey)" Sortable="true" />
+    </FluentDataGrid>
+}
+
+@* <FluentButton IconStart="@(new Icons.Regular.Size16.Globe())" OnClick="GetData">
+    Button
+</FluentButton> *@
+
+@code {
+
+    private IEnumerable<SingleLevelTenantDto> tenantNamesEnu;
+    private IQueryable<SingleLevelTenantDto> tenantNames;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetData();
+    }
+    private async Task GetData()
+    {
+        tenantNamesEnu = await SingleLevelTenantDto.TurnIntoDisplayFormat(auth.QueryTenants())
+                .OrderBy(x => x.TenantName)
+                .ToListAsync();
+
+        tenantNames = tenantNamesEnu.AsQueryable();
+
+
+    }
+
+}
