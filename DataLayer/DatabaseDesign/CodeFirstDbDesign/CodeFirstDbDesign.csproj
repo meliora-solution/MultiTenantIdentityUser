@@ -14,5 +14,6 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\..\IdentityUser.1.0.0\IdentityUser100.csproj" />
+	  <ProjectReference Include="..\..\SampleDb\SampleDb.csproj" />
 	</ItemGroup>
 </Project>

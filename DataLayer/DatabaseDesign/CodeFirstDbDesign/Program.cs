@@ -1,16 +1,23 @@
 using CodeFirstDbDesign.Components;
 using IdentityUser100.Context;
 using Microsoft.EntityFrameworkCore;
+using SampleDb.Contect;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
 builder.Services.AddDbContext<IdentityUser100DbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
+builder.Services.AddDbContext<SampleDbContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("SampleDbConnection"));
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

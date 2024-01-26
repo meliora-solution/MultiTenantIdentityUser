@@ -126,3 +126,9 @@ To ensure a backup, create a "Backup" folder and a "Step1" folder. Copy the proj
       <FluentNavLink Href="inviteUserByEmail" Icon="@(new Icons.Regular.Size20.PeopleCommunityAdd())" IconColor="Color.Accent">Invite User By Email</FluentNavLink>
     }
   ```
+
+  ## 01/27/2023
+
+* Create a sample database with only one table contact (Id,Name,Address)
+* Create web api project.
+
