@@ -1,0 +1,120 @@
+﻿@page "/tenantCreateSendEmail"
+
+@using AuthPermissions.AspNetCore
+@using System.ComponentModel.DataAnnotations
+
+@using AuthPermissions.SupportCode.AddUsersServices
+@using AuthpServices.PermissionsCode
+@using AuthpServices.SupportCode
+@using AuthpServices.SupportCode.AddUserServices
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.WebUtilities
+@using System.Text
+@using System.Text.Encodings.Web
+@using SharedServices.Models
+@using SharedServices.Services.Email
+@using UserManagement.Components.Account
+@using UserManagement.Components.Account.Shared
+
+
+@attribute [HasPermission(UserPermissions.TenantCreate)]
+
+@inject CreateTenant _userRegisterInvite;
+@inject SendEmailServices _sendEmailServices
+
+<FluentGrid>
+    <FluentGridItem xs="8" sm="4">
+        <StatusMessage Message="@Message" />
+        <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterTenant" FormName="register">
+            <DataAnnotationsValidator />
+            <h2>Create a new tenant.</h2>
+            <hr />
+            <FluentValidationSummary class="text-danger" role="alert" />
+            <FluentStack Orientation="Orientation.Vertical">
+                <FluentTextField Name="Input.TenantName" @bind-Value="Input.TenantName" AutoComplete="TenantName" Required="true" Label="Tenant Name" Style="width: 100%" />
+                <ValidationMessage For="() => Input.TenantName" class="text-danger" />
+
+                <FluentTextField Name="Input.Email" @bind-Value="Input.Email" AutoComplete="username" Required="true" Placeholder="name@example.com" Label="Email" Style="width: 100%" />
+                <ValidationMessage For="() => Input.Email" class="text-danger" />
+                <FluentTextField type="password" Name="Input.Password" @bind-Value="Input.Password" AutoComplete="current-password" Required="true" Placeholder="password" Label="Password" Style="width: 100%" />
+                <ValidationMessage For="() => Input.Password" class="text-danger" />
+                <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Style="width: 100%">Create Tenant</FluentButton>
+            </FluentStack>
+        </EditForm>
+    </FluentGridItem>
+</FluentGrid>
+@code {
+
+
+    private string? Message = string.Empty;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    public async Task RegisterTenant(EditContext editContext)
+    {
+        Input.Version = "Pro";
+        var newUserData = new AddNewUserDto { Email = Input.Email, Password = Input.Password, IsPersistent = false };
+        var newTenantData = new AddNewTenantDto { TenantName = Input.TenantName, Version = Input.Version };
+
+        var proVersionSetupData = new MultiTenantVersionData
+            {
+                TenantRolesForEachVersion = new Dictionary<string, List<string>>
+                {
+                    { "Pro", new List<string> { "Tenant Admin" } }
+                },
+                TenantAdminRoles = new Dictionary<string, List<string>>
+                {
+                    { "Pro", new List<string> { "Tenant Admin" } }
+                }
+            };
+
+        var status = await _userRegisterInvite.SignUpNewTenantWithVersionAsync(newUserData, newTenantData,
+              proVersionSetupData);
+
+        if (status.HasErrors)
+        {
+            Message = status.GetAllErrors();
+            return;
+        }
+
+        ServiceResponseDto<bool> response = new();
+
+        string siteName = "YourSiteName";
+ 
+
+        response = await _sendEmailServices.EmailConfirmation(siteName, Input.Email, _navman.BaseUri);
+
+        if (response.Success)
+        {
+            _navman.NavigateTo("Account/EmailConfirmation");
+
+        }
+
+      
+
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        [Display(Name = "tenantName")]
+        public string TenantName { get; set; } = "";
+
+        [Required]
+        [EmailAddress]
+        [Display(Name = "Email")]
+        public string Email { get; set; } = "";
+
+        [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [DataType(DataType.Password)]
+        [Display(Name = "Password")]
+        public string Password { get; set; } = "";
+
+        public string Version { get; set; } = "Pro";
+
+    }
+}

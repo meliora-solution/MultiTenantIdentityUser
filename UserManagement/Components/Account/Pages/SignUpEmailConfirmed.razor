@@ -1,0 +1,48 @@
+﻿@page "/Account/SignUpEmailConfirmed"
+
+@using Microsoft.AspNetCore.WebUtilities
+@using System.Text
+@using SharedServices.Models
+@using SharedServices.Services.Email
+
+<PageTitle>Confirm email</PageTitle>
+
+<h1>Confirm email</h1>
+
+
+ 
+ @inject DecodingServices _decode
+
+<StatusMessage Message="@statusMessage" />
+
+@code {
+    private string? statusMessage = string.Empty;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromQuery]
+    private string? UserId { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string? Code { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (UserId is null || Code is null)
+        {
+            _navman.NavigateTo("");
+        }
+        var jsonBody = new
+        {
+            userId = UserId,
+            code = Code
+        };
+        ServiceResponseDto<bool> response = new();
+        response = await _decode.ConfirmEmail(UserId, Code);      
+        statusMessage = response.Message;
+      
+    }
+
+  
+}

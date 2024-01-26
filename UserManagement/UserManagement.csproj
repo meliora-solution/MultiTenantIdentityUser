@@ -11,8 +11,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<!--<PackageReference Include="AuthPermissions.AspNetCore" Version="6.1.0" />-->
-		<PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.*-*" />
+	    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.*-*" />
 		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.*-*" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.*-*" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.*-*" />
@@ -24,5 +23,6 @@
 	<ItemGroup>
 		<ProjectReference Include="..\DataLayer\IdentityUser.1.0.0\IdentityUser100.csproj" />
 		<ProjectReference Include="..\ServiceLayer\AuthpServices\AuthpServices.csproj" />
+		<ProjectReference Include="..\ServiceLayer\SharedServices\SharedServices.csproj" />
 	</ItemGroup>
 </Project>

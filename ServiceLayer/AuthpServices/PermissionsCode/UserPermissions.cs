@@ -10,8 +10,9 @@ namespace AuthpServices.PermissionsCode
     public enum UserPermissions : ushort
     {
         NotSet = 0, //error condition
+
         [Display(GroupName = "User", Name = "Access page",Description = "Can Access Page")]
-        AccessPage = 10,
+        AccessPageLevelOne = 10,
 
 
 

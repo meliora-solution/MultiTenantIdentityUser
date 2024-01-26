@@ -23,6 +23,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserManagement", "Backup\St
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserManagement", "Backup\Step2\UserManagement\UserManagement.csproj", "{BB58657E-1578-42A7-B5C1-4934C0283EA1}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharedServices", "ServiceLayer\SharedServices\SharedServices.csproj", "{08D7C52E-9401-43C3-BA24-7DA78CD72A13}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -49,6 +51,10 @@ Global
 		{BB58657E-1578-42A7-B5C1-4934C0283EA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BB58657E-1578-42A7-B5C1-4934C0283EA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BB58657E-1578-42A7-B5C1-4934C0283EA1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08D7C52E-9401-43C3-BA24-7DA78CD72A13}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08D7C52E-9401-43C3-BA24-7DA78CD72A13}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08D7C52E-9401-43C3-BA24-7DA78CD72A13}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08D7C52E-9401-43C3-BA24-7DA78CD72A13}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -60,6 +66,7 @@ Global
 		{9E3C5828-F98E-4FE5-A2AC-93D7D82D42AA} = {F28FB8FC-C838-4F0F-9F70-261E51D23B17}
 		{CCE382FA-6B71-4603-A2EF-C452A757C645} = {7D821112-D7DB-49B3-A7D5-D658B06A7EF9}
 		{BB58657E-1578-42A7-B5C1-4934C0283EA1} = {9E3C5828-F98E-4FE5-A2AC-93D7D82D42AA}
+		{08D7C52E-9401-43C3-BA24-7DA78CD72A13} = {06675928-E197-4030-9C19-B0307F912FA9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E3ECD894-C1FD-4E79-9F17-BF73DC864907}

@@ -1,10 +1,12 @@
 ﻿@page "/tenantCreate"
 
 @using AuthPermissions.AspNetCore
-@using AuthPermissions.SupportCode.AddUsersServices
 @using System.ComponentModel.DataAnnotations
 
+@using AuthPermissions.SupportCode.AddUsersServices
 @using AuthpServices.PermissionsCode
+@using AuthpServices.SupportCode
+@using AuthpServices.SupportCode.AddUserServices
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
 @using System.Text
@@ -16,12 +18,14 @@
 @attribute [HasPermission(UserPermissions.TenantCreate)]
 
 
-@inject ISignInAndCreateTenant userRegisterInvite;
+ 
 @inject UserManager<IdentityUser> _userManager
 @inject NavigationManager _navigationManager
 @inject IEmailSender<IdentityUser> _emailSender
 @inject IdentityRedirectManager _redirectManager
 @inject SignInManager<IdentityUser> _signInManager
+
+@inject CreateTenant _userRegisterInvite;
 
 <FluentGrid>
       <FluentGridItem xs="8" sm="4">
@@ -71,7 +75,7 @@
                     { "Pro", new List<string> { "Tenant Admin" } }
                 }
             };
-        var status = await userRegisterInvite.SignUpNewTenantWithVersionAsync(newUserData, newTenantData,
+        var status = await _userRegisterInvite.SignUpNewTenantWithVersionAsync(newUserData, newTenantData,
               proVersionSetupData);
 
         if (status.HasErrors)

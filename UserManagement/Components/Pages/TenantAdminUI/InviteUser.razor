@@ -1,18 +1,23 @@
 ﻿@page "/inviteUser"
 @using AuthPermissions.AdminCode
 @using AuthPermissions.AspNetCore
-@using AuthPermissions.SupportCode.AddUsersServices
+
+@* 
+    @using AuthPermissions.SupportCode.AddUsersServices
+*@
+
 @using System.ComponentModel.DataAnnotations
 @using System.Security.Claims
+@using AuthPermissions.SupportCode.AddUsersServices
 @using AuthpServices.PermissionsCode
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Mvc
 @using UserManagement.Components.Account.Shared
-
+@using AuthpServices.SupportCode.AddUserServices
  
 @inject IAuthUsersAdminService _authUsersAdmin;
 
-@inject IInviteNewUserService inviteUserServiceService;
+@inject InviteNewUser _inviteUserServiceService;
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager
 
@@ -60,8 +65,6 @@
         var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
 
-
-
         Input.InviteExpirationTime = 0;
         //Input.RoleNames = new List<string> { "< none >" };
         Input.RoleNames = new List<string> { "User Guest" };
@@ -71,7 +74,7 @@
                 Roles = Input.RoleNames,
                 TimeInviteExpires = Input.InviteExpirationTime
             };
-        var status = await inviteUserServiceService.CreateInviteUserToJoinAsync(addUserData, userId);
+        var status = await _inviteUserServiceService.CreateInviteUserToJoinAsync(addUserData, userId);
 
         if (status.HasErrors)
         {

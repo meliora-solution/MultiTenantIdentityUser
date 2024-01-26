@@ -1,0 +1,247 @@
+﻿@page "/inviteUserByEmail"
+
+@using AuthPermissions.AdminCode
+@using AuthPermissions.AspNetCore
+@using AuthPermissions.SupportCode.AddUsersServices
+@using System.ComponentModel.DataAnnotations
+@using System.Security.Claims
+@using AuthpServices.PermissionsCode
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Mvc
+@using SharedServices.Models
+@using SharedServices.Services.Email
+@using UserManagement.Components.Account.Shared
+
+ @rendermode InteractiveServer
+
+@inject IAuthUsersAdminService _authUsersAdmin;
+
+@inject IInviteNewUserService inviteUserServiceService;
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager
+
+@attribute [HasPermission(UserPermissions.InviteUsers)]
+@inject SendEmailServices _sendEmailServices
+
+
+<FluentGrid>
+    <FluentGridItem xs="8" sm="4">
+        <FluentLabel><h6>@Message</h6></FluentLabel>
+        <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="InviteNewUser" FormName="InviteNewUser">
+            <DataAnnotationsValidator />
+            <h2>Invite New User.</h2>
+            <hr />
+            <FluentValidationSummary class="text-danger" role="alert" />
+            <FluentStack Orientation="Orientation.Vertical">
+                <FluentTextField Name="Input.Email" @bind-Value="Input.Email" AutoComplete="username" Required="true" Placeholder="name@example.com" Label="Email" Style="width: 100%" />
+                <ValidationMessage For="() => Input.Email" class="text-danger" />
+
+
+
+                <div style="width:100%;height: 100px; overflow-y: scroll;">
+                     <FluentSelect Position="SelectPosition.Below" 
+                                    Items=@stringOptionsExpiration
+                                    Label="Select Expiration"
+                                    OptionText="@(i => i.Text)"
+                                    OptionValue="@(i => i.Value)"
+                                    OptionSelected="@(i => i.Selected)"
+                                    @bind-SelectedOption="@selectedExpirationId"
+                                    @bind-Value="@stringValueExpiration" />
+                </div>
+
+
+
+             
+                <div style="width:100%;height: 200px; overflow-y: scroll;">
+                    <FluentSelect Items=@stringOptionsRoles
+                                  Label="Select RoleNames"
+                                  Required="true"
+                                  TOption="Option<string>"
+                                  Multiple=true
+                                  OptionText="@(i => i.Text)"
+                                  OptionValue="@(i => i.Value)"
+                                  OptionSelected="@(i => i.Selected)"
+                                  @bind-SelectedOptions="@selectedOptionsRoles"
+                                  @bind-Value="@Input.stringValueRoleNames" />
+
+                </div>
+                <ValidationMessage For="() => Input.stringValueRoleNames" class="text-danger" />
+
+                <FluentButton Type="ButtonType.Button" OnClick="InviteNewUser" Appearance="Appearance.Accent" Style="width: 100%">Invite User</FluentButton>
+            </FluentStack>
+        </EditForm>
+    </FluentGridItem>
+</FluentGrid>
+<p>
+    <FluentTextArea @bind-Value=InvitationLink style="width: 100%;" Label="Invitation Link:" />
+</p>
+
+@code {
+    private string? Message = string.Empty;
+    private string? InvitationLink = string.Empty;
+    private string? UserId;
+
+    List<Option<string>>? stringOptionsRoles = new();
+    List<string>? RoleNames =new List<string>();
+    string stringValueRoleNames;
+
+    IEnumerable<Option<string>> selectedOptionsRoles { get; set; }
+
+
+    List<Option<string>>? stringOptionsExpiration = new();
+    Option<string> selectedExpirationId = default!;
+    List<KeyValuePair<long, string>>? ExpirationTimesDropdown { get; set; }
+    string? stringValueExpiration;
+
+    bool showLink = false;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        UserId = GetUserId().Result;
+        List<string>? AllRoleNames = await _authUsersAdmin.GetRoleNamesForUsersAsync(UserId);
+
+        foreach (var item in AllRoleNames)
+        {
+            stringOptionsRoles?.Add(new Option<string>
+                {
+                    Value = item,
+                    Text = item,
+                    Selected = (item == "< none >") // You can set this based on your logic
+                });
+        }
+
+        ExpirationTimesDropdown = inviteUserServiceService.ListOfExpirationTimes();
+
+        foreach (var item in ExpirationTimesDropdown)
+        {
+            stringOptionsExpiration?.Add(new Option<string>
+                {
+                    Value = item.Key.ToString(),
+                    Text = item.Value,
+                    Selected = (item.Value == "Invite is only valid for 1 hour from now.") // You can set this based on your logic
+                });
+        }
+
+
+    }
+
+    private async ValueTask<string> GetUserId()
+    {
+        var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authenticationState.User;
+        var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        // Check if userId is null, and return an empty string if true
+        return userId ?? string.Empty;
+    }
+
+    public async Task InviteNewUser()
+    {
+
+        if(string.IsNullOrEmpty(Input.Email))
+        {
+            Message = "Please enter the email address of someone you want to invite to join.";
+            return;
+        }
+        stringValueRoleNames = selectedOptionsRoles != null ? string.Join(',', selectedOptionsRoles.Select(o => o.Value)) : "";
+        if (string.IsNullOrEmpty(Input.stringValueRoleNames))
+        {
+            Message = "Please select at least one role.";
+            return;
+        }
+        long ExpirationId = Convert.ToInt64(selectedExpirationId?.Value);
+
+        RoleNames = new List<string>();
+
+        int rolecount = selectedOptionsRoles.Count();
+
+        foreach (var item in selectedOptionsRoles)
+        {
+            if (rolecount > 1)
+            {
+                if (item.Value != "< none >")
+                {
+                    RoleNames.Add(item.Value);
+                }
+            }
+            else
+            {
+                 RoleNames.Add(item.Value);
+            }
+        }
+
+
+        var addUserData = new AddNewUserDto
+            {
+                Email = Input.Email,
+                Roles = RoleNames,
+                TimeInviteExpires = ExpirationId
+            };
+
+
+        var status = await inviteUserServiceService.CreateInviteUserToJoinAsync(addUserData, UserId);
+
+        if (status.HasErrors)
+        {
+            Message = Uri.EscapeDataString(status.GetAllErrors());
+            return;
+        }
+
+        InvitationLink = AbsoluteAction("AcceptInviteByEmail", new { verify = status.Result });
+
+        ServiceResponseDto<bool> response = new();
+
+        string siteName = "YourSiteName";
+
+
+        response = await _sendEmailServices.EmailInvitation(siteName, Input.Email, InvitationLink);
+
+        if (response.Success)
+        {
+            _navman.NavigateTo("Account/EmailConfirmation");
+
+        }
+
+
+
+    }
+    public string AbsoluteAction(string pageName, object routeValues = null)
+    {
+        string baseUri = NavigationManager.BaseUri;
+
+        // Use the base URI and relative path to construct the absolute URL
+        string absoluteUrl = $"{baseUri.TrimEnd('/')}/{pageName}";
+
+        if (routeValues != null)
+        {
+            var queryString = string.Join("&",
+                routeValues.GetType().GetProperties()
+                    .Select(property => $"{Uri.EscapeDataString(property.Name)}={Uri.EscapeDataString(property.GetValue(routeValues)?.ToString())}")
+                    .Where(parameter => !string.IsNullOrEmpty(parameter)));
+
+            if (!string.IsNullOrEmpty(queryString))
+            {
+                absoluteUrl += $"?{queryString}";
+            }
+        }
+
+        return absoluteUrl;
+    }
+
+
+    private sealed class InputModel
+    {
+        public string Email { get; set; } = "";
+        public string stringValueRoleNames { get; set; }
+        public string stringValueExpiration { get; set; }
+      
+
+    }
+}

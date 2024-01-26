@@ -21,7 +21,7 @@ namespace AuthpServices.PermissionsCode
             new("Tenant Admin", "Tenant-level admin",
                 "UserRead, UserRolesChange, RoleRead, InviteUsers", RoleTypes.TenantAdminAdd),
             // User Guest
-            new("User Guest", "User-level Guest", "AccessPage"),
+            new("User Guest", "User-level Guest", "AccessPageLevelOne"),
 
         };
       

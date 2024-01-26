@@ -1,9 +1,12 @@
 ﻿@page "/weather"
+@using AuthPermissions.AspNetCore
+@using AuthpServices.PermissionsCode
 @attribute [StreamRendering]
 
 <PageTitle>Weather</PageTitle>
 
 <h1>Weather</h1>
+@attribute [HasPermission(UserPermissions.AccessPageLevelOne)]
 
 <p>This component demonstrates showing data.</p>
 
