@@ -6,6 +6,9 @@ This project aims to establish a unified user identity for multitenant environme
 * Another significant hurdle is the absence of examples for creating multitenancy exclusively for the Identity User.
 * English is not my native language, so please forgive any grammar errors or sentences that may not be entirely correct.
 
+
+Please see this wiki documentation [Unified User Identity with Authp for Multitenant Blazor Applications](https://github.com/meliora-solution/MultiTenantIdentityUser/wiki).
+
 ## Create Custom Field DateCreated in AspNetUser table
 
 To enhance the functionality of the project, I intend to include a "DateCreated" field in the AspNetUser table. This field is defined in the IdentityUser100 class project within the configuration folder, specifically in the ApplicationUserConfig.cs file.
