@@ -1,0 +1,86 @@
+﻿@using BlazorServerEasyStock.IdentityAuthentication
+@using Microsoft.AspNetCore.Components.Authorization
+@using Newtonsoft.Json
+
+
+@inject AuthenticationStateProvider authStateProvider
+@inject CustomAuthenticationStateProvider customauthStateProvider
+
+@inject HttpClient httpClient
+
+<div class="navmenu">
+    <input type="checkbox" id="navmenu-toggle" />
+    <nav class="sitenav" aria-labelledby="main-menu" onclick="document.getElementById('navmenu-toggle').click();">
+        <FluentNavMenu Id="main-menu" Width="250" Collapsible="true" Title="Navigation menu" @bind-Expanded="expanded">
+            <FluentNavLink Href="/" Match="NavLinkMatch.All" Icon="@(new Icons.Regular.Size20.Home())" IconColor="Color.Accent">Home</FluentNavLink>
+            <FluentNavLink Href="counter" Icon="@(new Icons.Regular.Size20.NumberSymbolSquare())" IconColor="Color.Accent">Counter</FluentNavLink>
+            <FluentNavLink Href="weather" Icon="@(new Icons.Regular.Size20.WeatherPartlyCloudyDay())" IconColor="Color.Accent">Weather</FluentNavLink>
+            <AuthorizeView>
+                <Authorized>
+                
+
+                        @if (roles != null)
+                    {
+                        if (roles.Contains("AccessPageLevelOne"))
+                        {
+                            <FluentNavLink Href="contactList" Icon="@(new Icons.Regular.Size20.WeatherPartlyCloudyDay())" IconColor="Color.Accent">Contact List</FluentNavLink>
+                            <FluentNavLink Href="contactCreate" Icon="@(new Icons.Regular.Size20.WeatherPartlyCloudyDay())" IconColor="Color.Accent">EasyStock Contact</FluentNavLink>
+
+
+                        }
+                    }
+
+
+
+                </Authorized>
+                <NotAuthorized>
+           @*          <FluentNavMenu Id="main-menu" Width="250" Title="Navigation menu" @bind-Expanded="expanded">
+                        <FluentNavLink Href="signIn" Icon="@(new Icons.Regular.Size20.WeatherPartlyCloudyDay())" IconColor="Color.Accent">Sign In</FluentNavLink>
+                    </FluentNavMenu> *@
+
+                </NotAuthorized>
+            </AuthorizeView>
+        </FluentNavMenu>
+        
+    </nav>
+</div>
+
+@code {
+    private bool expanded = true;
+    private System.Security.Claims.ClaimsPrincipal user;
+   
+
+    List<string> roles = new List<string> { "User" };
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authenticationState = await customauthStateProvider.GetAuthenticationStateAsync();
+        user = authenticationState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            var AccessToken = await customauthStateProvider.GetAccessTokenAsync();
+
+            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", AccessToken);
+
+            var result = await httpClient.GetAsync("https://localhost:44305/api/Authenticate/getuserpermissions");
+
+            if (result.IsSuccessStatusCode)
+            {
+                var contentTemp = await result.Content.ReadAsStringAsync();
+                roles = JsonConvert.DeserializeObject<List<string>>(contentTemp);
+
+                
+            }
+        }
+      
+    }
+    private async Task Logout()
+    {
+        var customAuthStateProvider = (CustomAuthenticationStateProvider)authStateProvider;
+        await customAuthStateProvider.UpdateAuthenticationState(null!);
+        _navman.NavigateTo("/", replace: false);
+    }
+}
+

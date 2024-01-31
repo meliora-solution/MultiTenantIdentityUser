@@ -4,8 +4,10 @@
 
 @implements IDisposable
 
-@inject UserManager<IdentityUser> _userManager
-@inject AuthenticationStateProvider AuthenticationStateProvider
+@* @inject UserManager<IdentityUser> _userManager
+ *@
+ 
+ @inject AuthenticationStateProvider AuthenticationStateProvider
 
 <div class="navmenu">
     <input type="checkbox" id="navmenu-toggle" />
@@ -23,7 +25,8 @@
                         <FluentButton Type="ButtonType.Submit" Style="width: 100%;">Logout</FluentButton>
                     </form>
                         <FluentNavMenu Id="tenant-menu" Width="250" Title="Navigation menu" @bind-Expanded="expanded">
-                            @if (user.HasPermission(UserPermissions.TenantList))
+                       
+                            @if(user.HasPermission(UserPermissions.TenantList))
                         {
                             <FluentNavLink Href="tenantlist" Icon="@(new Icons.Regular.Size20.PeopleCommunity())" IconColor="Color.Accent">Tenant List</FluentNavLink>
                         }
@@ -53,6 +56,7 @@
     private bool expanded = true;
     private System.Security.Claims.ClaimsPrincipal user;
     private string? currentUrl;
+
     protected override async Task OnInitializedAsync()
     {
         var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();

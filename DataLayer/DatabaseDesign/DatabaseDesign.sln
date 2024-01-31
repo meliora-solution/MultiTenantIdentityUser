@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeFirstDbDesign", "CodeFi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IdentityUser100", "..\IdentityUser.1.0.0\IdentityUser100.csproj", "{0321CB0E-9BA8-4875-9791-0F06D3DDFFDF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleDb", "..\SampleDb\SampleDb.csproj", "{71612497-9ACE-4533-9591-68A77CD4726F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasyStockDb", "..\EasyStockDb\EasyStockDb.csproj", "{3C68B429-C4C8-4D93-8F49-3F1DA44008A6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,10 @@ Global
 		{0321CB0E-9BA8-4875-9791-0F06D3DDFFDF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0321CB0E-9BA8-4875-9791-0F06D3DDFFDF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0321CB0E-9BA8-4875-9791-0F06D3DDFFDF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{71612497-9ACE-4533-9591-68A77CD4726F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{71612497-9ACE-4533-9591-68A77CD4726F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{71612497-9ACE-4533-9591-68A77CD4726F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{71612497-9ACE-4533-9591-68A77CD4726F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C68B429-C4C8-4D93-8F49-3F1DA44008A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C68B429-C4C8-4D93-8F49-3F1DA44008A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C68B429-C4C8-4D93-8F49-3F1DA44008A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C68B429-C4C8-4D93-8F49-3F1DA44008A6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

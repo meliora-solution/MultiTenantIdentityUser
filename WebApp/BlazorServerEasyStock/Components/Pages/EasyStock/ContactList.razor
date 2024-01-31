@@ -1,0 +1,121 @@
+﻿@page "/contactList"
+
+@using BlazorServerEasyStock.IdentityAuthentication
+@using Microsoft.AspNetCore.Components.Authorization
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
+@using SharedServices.Models.Account
+@using SharedServices.Models.EasyStock
+
+@inject HttpClient httpClient
+@inject IDialogService _dialogService
+
+@inject AuthenticationStateProvider authStateProvider
+@inject CustomAuthenticationStateProvider customauthStateProvider
+
+<h3>Contact</h3>
+@if (IsLoading == true)
+{
+    <div style="width: 300px; display: grid; grid-gap: 12px; grid-auto-flow: column;">
+        <FluentProgress></FluentProgress>
+    </div>
+}
+@*  <Stock.Component.NameFilter OnFilter="FilterNames" /> *@
+
+<FluentDataGrid Items="@Contacts" ResizableColumns=true GridTemplateColumns="0.2fr 0.2fr 0.3fr 0.3fr 0.2fr 0.3fr 0.2fr 0.2fr 0.2fr"
+                style="height: 580px;overflow:auto;">
+
+    <PropertyColumn Property="@(c => c.ContactId)" Title="Id" Align="Align.Start" Sortable="true" />
+    <PropertyColumn Property="@(c => c.type)" Title="Type" Align="Align.Start" Sortable="true" />
+    <PropertyColumn Property="@(c => c.Name)" Title="Name" Align="Align.Start" Sortable="true" />
+    <PropertyColumn Property="@(c => c.Address)" Title="Address" Align="Align.Start" Sortable="true" />
+    <PropertyColumn Property="@(c => c.Phone)" Title="Phone" Align="Align.Start" />
+    <PropertyColumn Property="@(c => c.Description)" Title="Description" Align="Align.Start" />
+    <PropertyColumn Property="@(c => c.Datakey)" Title="Datakey" Align="Align.Start" />
+
+    <TemplateColumn Title="Actions" Align="@Align.End">
+        <FluentButton IconEnd="@(new Icons.Regular.Size16.Edit())"  BackgroundColor="var(--inherit-bg)" Appearance="Appearance.Stealth" Title="Edit"
+                      Color="Color.Warning" OnClick="@(() => Edit(context.ContactId))" />
+        <FluentButton IconEnd="@(new Icons.Regular.Size16.Delete())" BackgroundColor="var(--inherit-bg)" Appearance="Appearance.Stealth" Title="Delete"
+                      Color="var(--danger)" OnClick="@(() => Delete(context.ContactId))" />
+    </TemplateColumn>
+
+
+</FluentDataGrid>
+
+
+@code {
+    private bool IsLoading { get; set; } = false;
+    private System.Security.Claims.ClaimsPrincipal user;
+    private IQueryable<ContactDto>? Contacts;
+    protected override async Task OnInitializedAsync()
+    {
+
+        base.OnInitialized();
+        IsLoading = true;
+        await GetContactList();
+        IsLoading = false;
+    }
+    public async Task GetContactList()
+    {
+
+        try
+        {
+
+            var authenticationState = await customauthStateProvider.GetAuthenticationStateAsync();
+            user = authenticationState.User;
+            var AccessToken = await customauthStateProvider.GetAccessTokenAsync();
+            // cek expiration date
+
+            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", AccessToken);
+            var result = await httpClient.GetAsync("api/Contact/GetContact");
+          //  var result = await httpClient.GetAsync("https://localhost:44305/api/Contact/GetContact");
+            if (result.IsSuccessStatusCode)
+            {
+                if (result.StatusCode == System.Net.HttpStatusCode.NoContent)
+                {
+                    _dialogService.ShowInfo("Data is empty", "Save");
+                    return;
+                }
+
+
+
+                var contentTemp = await result.Content.ReadAsStringAsync();
+
+                IQueryable<ContactDto> contacts = null;
+
+                if (!string.IsNullOrEmpty(contentTemp))
+                {
+                    var deserializedContacts = JsonConvert.DeserializeObject<IEnumerable<ContactDto>>(contentTemp);
+
+                    if (deserializedContacts != null)
+                    {
+                        contacts = deserializedContacts.AsQueryable();
+                    }
+                }
+
+                Contacts = contacts ?? Enumerable.Empty<ContactDto>().AsQueryable();
+
+                return;
+            }
+            _dialogService.ShowInfo("Can no connect to server", "Error");
+
+        }
+
+        catch (Exception ex)
+        {
+            _dialogService.ShowInfo(ex.Message, "Error");
+        }
+    }
+
+
+    private async void Edit(int Id)
+    {
+      //  _navman.NavigateTo($"contactUpdate/{Id}");
+    }
+
+    private async void Delete(int Id)
+    {
+
+    }
+}

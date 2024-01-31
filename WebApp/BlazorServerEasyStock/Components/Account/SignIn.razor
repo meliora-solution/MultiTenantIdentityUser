@@ -1,0 +1,96 @@
+﻿@page "/SignIn"
+
+@using BlazorServerEasyStock.IdentityAuthentication
+@using Microsoft.AspNetCore.Components.Authorization
+@using SharedServices.Models.Account
+
+
+<h3>Login</h3>
+
+@inject HttpClient _httpClient
+@inject AuthenticationStateProvider authStateProvider
+
+
+<FluentGrid>
+    <FluentGridItem xs="8" sm="4">
+        @*  <StatusMessage Message="@Message" /> *@
+        <EditForm Model="LoginUser" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="HandleLogin" FormName="SignIn">
+            <DataAnnotationsValidator />
+            <h3>Use a local account to log in.</h3>
+            <hr />
+            <FluentValidationSummary class="text-danger" role="alert" />
+            <FluentStack Orientation="Orientation.Vertical">
+
+                <FluentTextField Name="LoginUser.Email" @bind-Value="LoginUser.Email" AutoComplete="username" Required="true" Placeholder="name@example.com" Label="Email" Style="width: 100%" />
+                <ValidationMessage For="() => LoginUser.Email" class="text-danger" />
+                <FluentTextField type="password" Name="LoginUser.Password" @bind-Value="LoginUser.Password" AutoComplete="current-password" Required="true" Placeholder="password" Label="Password" Style="width: 100%" />
+                <ValidationMessage For="() => LoginUser.Password" class="text-danger" />
+                <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Style="width: 100%">SignIn</FluentButton>
+            </FluentStack>
+        </EditForm>
+    </FluentGridItem>
+</FluentGrid>
+
+@code 
+{
+    private LoginUser LoginUser { get; set; } = new();
+    private string? Message;
+
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+      
+    }
+    private async Task HandleLogin()
+    {
+        Message = string.Empty;
+        try
+        {
+
+            // use IISExpress
+
+            var response = await _httpClient.PostAsJsonAsync("https://localhost:44305/api/auth-default/login", LoginUser);
+            if (!response.IsSuccessStatusCode)
+            {
+                Message = "Invalid Credentials";
+                return;
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
+            if (string.IsNullOrEmpty(result!.AccessToken)) return;
+
+            _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", result.AccessToken);
+            var getUserClaims = await _httpClient.GetAsync("api/auth-default/manage/info");
+            if (!getUserClaims.IsSuccessStatusCode) return;
+
+            var userDetails = await getUserClaims.Content.ReadFromJsonAsync<UserDetails>();
+            var authenticationModel = new AuthenticationModel()
+                {
+                    AccessToken = result.AccessToken,
+                    RefreshToken = result.RefreshToken,
+                    Username = userDetails!.Email,
+                    ExpirationDate = DateTime.Now.AddMinutes(60)
+                };
+
+            var customAuthStateProvider = (CustomAuthenticationStateProvider)authStateProvider;
+            await customAuthStateProvider.UpdateAuthenticationState(authenticationModel);
+
+            await Task.Delay(200);
+
+            // force reload so the links in navmenu visible. Without reload the links are not shown.
+            _navman.NavigateTo("/",true);
+
+           
+          
+
+        }
+        catch (Exception ex)
+        {
+            string msg = ex.Message;
+        }
+
+    }
+   
+}

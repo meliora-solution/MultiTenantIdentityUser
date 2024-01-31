@@ -1,0 +1,33 @@
+﻿@using BlazorServerEasyStock.IdentityAuthentication
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider authStateProvider
+
+<AuthorizeView>
+    <Authorized>
+        <i>@context.User.Identity.Name.Trim()</i>
+       @*  <form method="post" action="Logout">   </form> *@
+            <FluentButton BackgroundColor="var(--inherit-bg)" Title="Logout" Type="ButtonType.Button" OnClick="Logout">
+                <FluentIcon Value="@(new Icons.Regular.Size24.LockOpen())" Color="Color.Lightweight" Slot="start" />
+            </FluentButton>
+       
+    </Authorized>
+    <NotAuthorized>
+           <FluentButton BackgroundColor="var(--inherit-bg)" Title="Login" OnClick="@(() => GetLink())">
+            <FluentIcon Value="@(new Icons.Regular.Size24.LockClosed())" Color="Color.Lightweight" Slot="start" />
+        </FluentButton>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code{
+    string? selectValue;
+    private void GetLink()
+    {
+        _navman.NavigateTo("./SignIn");
+    }
+    private async Task Logout()
+    {
+        var customAuthStateProvider = (CustomAuthenticationStateProvider)authStateProvider;
+        await customAuthStateProvider.UpdateAuthenticationState(null!);
+        _navman.NavigateTo("/", replace: false);
+    }
+}

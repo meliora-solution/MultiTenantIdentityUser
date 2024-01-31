@@ -1,0 +1,188 @@
+﻿@page "/contactCreate"
+
+@using BlazorServerEasyStock.IdentityAuthentication
+
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
+@using SharedServices.Models
+@using SharedServices.Models.EasyStock
+@using System.Text
+
+<PageTitle>Contact Create</PageTitle>
+@inject IJSRuntime jsruntime
+@inject IDialogService _dialogService
+
+@inject HttpClient _httpClient
+@inject CustomAuthenticationStateProvider customauthStateProvider
+
+@if (IsLoading == true)
+{
+    <div style="width: 300px; display: grid; grid-gap: 12px; grid-auto-flow: column;">
+        <FluentProgress></FluentProgress>
+    </div>
+}
+<FluentIcon Value="@(new Icons.Regular.Size16.ArrowLeft())" Color="Color.Neutral" Slot="start" OnClick="GoBack" />
+
+<div style="padding: 1.5rem;">
+    <FluentLabel Typo="Typography.Header"> Buat Record Baru </FluentLabel>
+    <br />
+
+    <EditForm Model="@model" OnValidSubmit="@OnValidSubmit">
+        <DataAnnotationsValidator />
+        <FluentValidationSummary />
+        <FluentStack Orientation="Orientation.Vertical">
+            <FluentGrid Spacing="0">
+                <FluentGridItem xs="12">
+                    <FluentGrid>
+                        <FluentGridItem xs="6">
+                            <FluentTextField Appearance="FluentInputAppearance.Filled" style="width: 100%;" @bind-Value="model.Name" Placeholder="Name" />
+                        </FluentGridItem>
+
+                    </FluentGrid>
+                    <FluentGrid>
+                        <FluentGridItem xs="6">
+                            <FluentCombobox Items=@stringOptionsType
+                                            OptionText="@(i => i.Text)"
+                                            OptionValue="@(i => i.Value)"
+                                            OptionSelected="@(i => i.Selected)"
+                            @bind-SelectedOption="@selectedTypeId"
+                            @bind-Value="@stringType" />
+                        </FluentGridItem>
+                    </FluentGrid>
+                    <FluentGrid>
+                        <FluentGridItem xs="6">
+                            <FluentTextField Appearance="FluentInputAppearance.Filled" style="width: 100%;" @bind-Value="model.Phone" Placeholder="Phone" />
+                        </FluentGridItem>
+                    </FluentGrid>
+                    <FluentGrid>
+                        <FluentGridItem xs="6">
+                            <FluentTextArea @bind-Value="model.Address" Rows="3" Cols="80">Alamat</FluentTextArea>
+                        </FluentGridItem>
+                    </FluentGrid>
+                    <FluentGrid>
+                        <FluentGridItem xs="6">
+                            <FluentTextArea @bind-Value="model.Description" Rows="3" Cols="80">Description</FluentTextArea>
+                        </FluentGridItem>
+                    </FluentGrid>
+                </FluentGridItem>
+            </FluentGrid>
+        </FluentStack>
+        <br />
+        <FluentGrid Spacing="3" Justify="@Justification">
+            <FluentGridItem xs="12" sm="6">
+                <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Submit</FluentButton>
+            </FluentGridItem>
+
+        </FluentGrid>
+    </EditForm>
+</div>
+
+@code {
+    private bool IsLoading { get; set; } = false;
+    public ContactDto model { get; set; }
+    private string? Message;
+    List<Option<string>> stringOptionsType = new();
+    string? stringType = "(Select Type)";
+    Option<string> selectedTypeId = default!;
+    JustifyContent Justification = JustifyContent.FlexStart;
+    private System.Security.Claims.ClaimsPrincipal user;
+
+    private async Task GoBack()
+    {
+        await jsruntime.InvokeVoidAsync("history.back");
+    }
+    protected override async Task OnInitializedAsync()
+    {
+
+        base.OnInitialized();
+
+        init();
+
+    }
+
+    private async void init()
+    {
+        model = new ContactDto();
+        model.type = "O";
+
+        stringOptionsType = new()
+        {
+            { new Option<string> { Value = "0", Text = "(Select Type)", Selected=true } },
+            { new Option<string> { Value = "S", Text = "Supplier" } },
+            { new Option<string> { Value = "C", Text = "Customer"} },
+            { new Option<string> { Value = "O", Text = "Other" } }
+
+        };
+    }
+
+    private async void OnValidSubmit()
+    {
+        if (stringType == "(Select Type)")
+        {
+            _dialogService.ShowInfo("Select Type", "Save");
+            return;
+        }
+
+
+        try
+        {
+            IsLoading = true;
+
+            model.type = selectedTypeId.Value;
+
+
+
+            ServiceResponseDto<bool> result = new();
+            var authenticationState = await customauthStateProvider.GetAuthenticationStateAsync();
+            user = authenticationState.User;
+
+            var AccessToken = await customauthStateProvider.GetAccessTokenAsync();
+            _httpClient = new HttpClient();
+            _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", AccessToken);
+
+
+          //  var response = await _httpClient.PostAsJsonAsync("https://localhost:44305/api/Contact/Create", model);
+            var response = await _httpClient.PostAsJsonAsync("api/Contact/Create", model);
+            // Assuming ServiceResponseDto<T> has a boolean property named "Success"
+            var responseContent = await response.Content.ReadFromJsonAsync<ServiceResponseDto<bool>>();
+
+            if (responseContent != null)
+            {
+                if (responseContent.Success)
+                {
+                    // Do something when success is true
+                    _dialogService.ShowInfo(responseContent.Message, "Save");
+                }
+                else
+                {
+                    // Do something when success is false
+                    _dialogService.ShowError(responseContent.Message, "Error");
+                }
+            }
+            else
+            {
+                // Handle the case when the response couldn't be deserialized
+                _dialogService.ShowError("Failed to parse the response.", "Error");
+            }
+
+          
+
+            IsLoading = false;
+            result = new();
+            model = new();
+            selectedTypeId.Text = null;
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            string msg = ex.Message;
+            IsLoading = false;
+            return;
+        }
+
+    } 
+    
+    
+
+}

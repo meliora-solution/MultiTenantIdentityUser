@@ -16,12 +16,18 @@ using AuthPermissions.SupportCode.AddUsersServices.Authentication;
 using AuthPermissions.SupportCode.AddUsersServices;
 using AuthPermissions.BaseCode.SetupCode;
 using AuthPermissions.BaseCode;
+
+using MailServices.Models;
 using AuthpServices.Extensions;
-using SharedServices.Models.Email;
+using MailServices.Extensions;
+using EasyStockServices.Extensions;
+using EasyStockDb.Context;
 
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -29,12 +35,14 @@ builder.Services.AddRazorComponents()
 builder.Services.AddFluentUIComponents();
 
 
+/*Create Tenant , Invite Tenant*/
+
 builder.Services.AddAuthpServices();
 // Register SmtpSettings
 #region "From SharedServices"
 
-builder.Services.AddSharedServices();
-
+/*Send Email*/
+builder.Services.AddEmailServices();
 var SmtpSettingsSection = builder.Configuration.GetSection("SMTP");
 builder.Services.Configure<SmtpSetting>(SmtpSettingsSection);
 

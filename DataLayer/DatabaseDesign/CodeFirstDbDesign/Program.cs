@@ -1,7 +1,9 @@
+using AuthPermissions.AspNetCore.GetDataKeyCode;
 using CodeFirstDbDesign.Components;
+using EasyStockDb.Context;
 using IdentityUser100.Context;
 using Microsoft.EntityFrameworkCore;
-using SampleDb.Contect;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,14 +15,21 @@ builder.Services.AddDbContext<IdentityUser100DbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
-builder.Services.AddDbContext<SampleDbContext>(options =>
+
+builder.Services.AddDbContext<EasyStockDbContext>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("SampleDbConnection"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("EasyStockDbConnection"));
 });
+
+
+builder.Services.AddTransient<IGetDataKeyFromUser, GetDataKeyFromUserNormal>();
+
+builder.Services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);

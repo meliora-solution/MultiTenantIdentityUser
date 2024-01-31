@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+	<AssemblyName>MailServices</AssemblyName>
+	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	<Version>1.0.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+	  <PackageReference Include="MailKit" Version="4.3.0" />
+	  <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\DataLayer\IdentityUser.1.0.0\IdentityUser100.csproj" />
+    <ProjectReference Include="..\SharedServices\SharedServices.csproj" />
+  </ItemGroup>
+
+</Project>
