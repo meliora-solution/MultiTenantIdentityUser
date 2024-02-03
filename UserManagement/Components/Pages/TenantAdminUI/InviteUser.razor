@@ -73,57 +73,6 @@
     </FluentGridItem>
 </FluentGrid>
 
-@* 
-     
-<FluentGrid>
-    <FluentGridItem xs="8" sm="4">
-        <FluentLabel><h6>@Message</h6></FluentLabel>
-        <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="InviteNewUser" FormName="InviteNewUser">
-            <DataAnnotationsValidator />
-            <h2>Invite New User.</h2>
-            <hr />
-            <FluentValidationSummary class="text-danger" role="alert" />
-            <FluentStack Orientation="Orientation.Vertical">
-
-                <FluentTextField Name="Input.Email" @bind-Value="Input.Email" AutoComplete="username"
-                                 Required="true" Placeholder="name@example.com" Label="Email" Style="width: 100%" />
-
-                <ValidationMessage For="() => Input.Email" class="text-danger" />
-
-                <div style="width:100%;height: 100px; overflow-y: scroll;">
-                    <FluentSelect Position="SelectPosition.Below"
-                                  Items=@stringOptionsExpiration
-                                  Label="Select Expiration"
-                                  OptionText="@(i => i.Text)"
-                                  OptionValue="@(i => i.Value)"
-                                  OptionSelected="@(i => i.Selected)"
-                                  @bind-SelectedOption="@selectedExpirationId"
-                                  @bind-Value="@stringValueExpiration" />
-                </div>
-
-
-                <div style="width:100%;height: 200px; overflow-y: scroll;">
-                    <FluentSelect Items=@stringOptionsRoles
-                                  Label="Select RoleNames"
-                             
-                                  TOption="Option<string>"
-                                  Multiple=true
-                                  OptionText="@(i => i.Text)"
-                                  OptionValue="@(i => i.Value)"
-                                  OptionSelected="@(i => i.Selected)"
-                                  @bind-SelectedOptions="@selectedOptionsRoles"
-                                  @bind-Value="@Input.stringValueRoleNames" />
-
-                </div>
-                <ValidationMessage For="() => Input.stringValueRoleNames" class="text-danger" />
-
-                <FluentButton Type="ButtonType.Button" OnClick="InviteNewUser" Appearance="Appearance.Accent" Style="width: 100%">Invite User</FluentButton>
-            </FluentStack>
-        </EditForm>
-    </FluentGridItem>
-</FluentGrid>
-*@
-
 
 
 <p>

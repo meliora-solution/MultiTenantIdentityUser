@@ -1,28 +1,28 @@
-using AuthPermissions.AspNetCore.Services;
 using AuthPermissions;
+using AuthPermissions.AspNetCore;
+using AuthPermissions.AspNetCore.Services;
+using AuthPermissions.AspNetCore.StartupServices;
+using AuthPermissions.BaseCode;
+using AuthPermissions.BaseCode.SetupCode;
+using AuthPermissions.SupportCode.AddUsersServices;
+using AuthPermissions.SupportCode.AddUsersServices.Authentication;
+using AuthpServices.Extensions;
 using AuthpServices.PermissionsCode;
 using IdentityUser100.Context;
+using MailServices.Extensions;
+using MailServices.Models;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.FluentUI.AspNetCore.Components;
+using PartnerCode.EfCoreCode;
+using RunMethodsSequentially;
 using UserManagement.Components;
 using UserManagement.Components.Account;
-using AuthPermissions.AspNetCore;
-using RunMethodsSequentially;
-using AuthPermissions.AspNetCore.StartupServices;
-using Microsoft.FluentUI.AspNetCore.Components;
-using AuthPermissions.SupportCode.AddUsersServices.Authentication;
-using AuthPermissions.SupportCode.AddUsersServices;
-using AuthPermissions.BaseCode.SetupCode;
-using AuthPermissions.BaseCode;
-
-using MailServices.Models;
-using AuthpServices.Extensions;
-using MailServices.Extensions;
-using EasyStockServices.Extensions;
-using EasyStockDb.Context;
-
+using PartnerCode.AppStart;
+using PartnerCode.Services;
+using ExamplesCommonCode.IdentityCookieCode;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -80,7 +80,7 @@ builder.Services.AddSingleton<IEmailSender<IdentityUser>, IdentityNoOpEmailSende
 
 builder.Services.RegisterAuthPermissions<UserPermissions>(options =>
 {
-   
+
     options.UseLocksToUpdateGlobalResources = false;
     options.TenantType = TenantTypes.SingleLevel;
     options.LinkToTenantType = LinkToTenantTypes.OnlyAppUsers;
@@ -88,25 +88,30 @@ builder.Services.RegisterAuthPermissions<UserPermissions>(options =>
     options.PathToFolderToLock = builder.Environment.WebRootPath;
 
 })
-   
+
 
     .UsingEfCoreSqlServer(connectionString) //NOTE: This uses the same database as the individual accounts DB
     .IndividualAccountsAuthentication()
-    .AddSuperUserToIndividualAccounts()
-  
+
+       .RegisterAddClaimToUser<AddTenantNameClaim>()
+    .RegisterAddClaimToUser<AddRefreshEveryMinuteClaim>()
+
+    .RegisterTenantChangeService<PartnerTenantChangeService>()
     .RegisterFindUserInfoService<IndividualAccountUserLookup>()
     .AddRolesPermissionsIfEmpty(AppAuthSetupData.RolesDefinition)
     .AddAuthUsersIfEmpty(AppAuthSetupData.UsersRolesDefinition)
 
     .RegisterFindUserInfoService<IndividualAccountUserLookup>()
     .RegisterAuthenticationProviderReader<SyncIndividualAccountUsers>()
-
+  .AddSuperUserToIndividualAccounts()
     .SetupAspNetCoreAndDatabase(options =>
     {
         //Migrate individual account database
         options.RegisterServiceToRunInJob<StartupServiceMigrateAnyDbContext<IdentityUser100DbContext>>();
         //Add demo users to the database
         options.RegisterServiceToRunInJob<StartupServicesIndividualAccountsAddDemoUsers>();
+
+        options.RegisterServiceToRunInJob<StartupServiceMigrateAnyDbContext<PartnerDbContext>>();
     });
 
 //manually add services from the AuthPermissions.SupportCode project
@@ -114,6 +119,8 @@ builder.Services.RegisterAuthPermissions<UserPermissions>(options =>
 builder.Services.AddTransient<IAddNewUserManager, IndividualUserAddUserManager<IdentityUser>>();
 builder.Services.AddTransient<ISignInAndCreateTenant, SignInAndCreateTenant>();
 builder.Services.AddTransient<IInviteNewUserService, InviteNewUserService>();
+// register Partner
+builder.Services.RegisterPartner(builder.Configuration);
 
 var app = builder.Build();
 

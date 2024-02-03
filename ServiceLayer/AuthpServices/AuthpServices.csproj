@@ -14,4 +14,9 @@
 		<PackageReference Include="AuthPermissions.AspNetCore" Version="6.1.0" />
 	</ItemGroup>
 
+	
+	<ItemGroup>
+	  <ProjectReference Include="..\..\DataLayer\IdentityUser.1.0.0\IdentityUser100.csproj" />
+	</ItemGroup>
+
 </Project>

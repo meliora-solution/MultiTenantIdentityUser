@@ -101,10 +101,47 @@
         }
         else
         {
+            /*
+            Initially when the database created, EmailConfirmed is set to false. Set to true
+           */
+            if (result.IsNotAllowed)
+            {
+                if (Input.Email == "Super@g1.com" || Input.Email == "AppAdmin@g1.com")
+                {
+                    await SetEmailConfirmed();
+                    await LoginUser();
+                    return;
+                }
+            }
+            // result.failed
             errorMessage = "Error: Invalid login attempt.";
         }
     }
+    private async Task SetEmailConfirmed()
+    {
 
+
+        if (Input.Email == "Super@g1.com" || Input.Email == "AppAdmin@g1.com")
+        {
+            var superAdminUser = await SignInManager.UserManager.FindByEmailAsync("Super@g1.com");
+            if (superAdminUser != null)
+            {
+                superAdminUser.EmailConfirmed = true;
+                await SignInManager.UserManager.UpdateAsync(superAdminUser);
+            }
+
+            // Set EmailConfirmed for DemoUsers user
+            var demoUser = await SignInManager.UserManager.FindByEmailAsync("AppAdmin@g1.com");
+            if (demoUser != null)
+            {
+                demoUser.EmailConfirmed = true;
+                await SignInManager.UserManager.UpdateAsync(demoUser);
+            }
+        }
+
+
+
+    }
     private sealed class InputModel
     {
         [Required]

@@ -14,7 +14,6 @@ namespace IdentityUser100.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 
-
             modelBuilder.ApplyConfiguration(new ApplicationUserConfig());
             modelBuilder.ApplyConfiguration(new PropertyConfig());
             modelBuilder.ApplyConfiguration(new UserPropertyConfig());

@@ -24,6 +24,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\DataLayer\IdentityUser.1.0.0\IdentityUser100.csproj" />
 		<ProjectReference Include="..\ServiceLayer\AuthpServices\AuthpServices.csproj" />
+		<ProjectReference Include="..\ServiceLayer\CompanyCode\PartnerCode.csproj" />
 		<ProjectReference Include="..\ServiceLayer\EasyStockServices\EasyStockServices.csproj" />
 		<ProjectReference Include="..\ServiceLayer\EmailServices\MailServices.csproj" />
 		<ProjectReference Include="..\ServiceLayer\SharedServices\SharedServices.csproj" />

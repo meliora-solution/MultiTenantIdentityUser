@@ -9,21 +9,19 @@
 @inject IAuthTenantAdminService _authTenantAdmin
 
 
-
-<FluentButton Type="ButtonType.Button" OnClick="Create" Appearance="Appearance.Accent" Style="width: 100%">Create Tenant</FluentButton>
 <FluentGrid>
     <FluentGridItem xs="8" sm="4">
-        @Message
-        <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="Create" FormName="register">
+        <FluentLabel><h6>@Message</h6></FluentLabel>
+        <EditForm Model="Input" OnValidSubmit="@Create">
             <DataAnnotationsValidator />
             <h2>Create Tenant.</h2>
             <hr />
-            <FluentValidationSummary class="text-danger" role="alert" />
+            <FluentValidationSummary />
             <FluentStack Orientation="Orientation.Vertical">
-                <FluentTextField Name="Input.TenantName" @bind-Value="Input.TenantName" AutoComplete="TenantName" Required="true" Label="Tenant Name" Style="width: 100%" />
+                <FluentTextField Name="Input.TenantName" @bind-Value="Input.TenantName" Required="true" Label="Tenant Name" Style="width: 100%" />
                 <ValidationMessage For="() => Input.TenantName" class="text-danger" />
 
-               @*  <div style="width:100%;height: 200px; overflow-y: scroll;">
+                <div style="width:100%;height: 200px; overflow-y: scroll;">
                     <FluentSelect Items=@stringOptionsRoles
                                   Label="Select RoleNames"
                                   TOption="Option<string>"
@@ -34,7 +32,6 @@
                                   @bind-SelectedOptions="@selectedOptionsRoles"
                                   @bind-Value="@stringValueRoleNames" />
                 </div>
-                <ValidationMessage For="() => stringValueRoleNames" class="text-danger" /> *@
                 <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Style="width: 100%">Create Tenant</FluentButton>
             </FluentStack>
         </EditForm>
@@ -75,44 +72,37 @@
         // A service (method AddSingleTenantAsync) needed the ITenantChangeService service, but you haven't registered it.
         // You can do this using the RegisterTenantChangeService configuration method.
 
-
-        RoleNames = new List<string>();
-        // if (selectedOptionsRoles != null)
-        // {
-        //     foreach (var item in selectedOptionsRoles)
-        //     {
-        //         RoleNames.Add(item.Value);
-
-        //     }
-        // }
-
-        var status = await _authTenantAdmin.AddSingleTenantAsync(Input.TenantName, RoleNames);
-        if (status.HasErrors)
+        stringValueRoleNames = selectedOptionsRoles != null ? string.Join(',', selectedOptionsRoles.Select(o => o.Value)) : "";
+        if (string.IsNullOrEmpty(stringValueRoleNames))
         {
-            Message = status.GetAllErrors();
+            Message = "Please select at least one role.";
             return;
         }
-        // try
-        // {
+        RoleNames = new List<string>();
+        if (selectedOptionsRoles != null)
+        {
+            foreach (var item in selectedOptionsRoles)
+            {
+                RoleNames.Add(item.Value);
 
+            }
+        }
+        
+        try
+        {
+           var status = await _authTenantAdmin.AddSingleTenantAsync(Input.TenantName, RoleNames);
 
+            if (status.HasErrors)
+            {
+                Message = status.GetAllErrors();
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            Message =ex.Message;
+        }
 
-        //     var status = await _authTenantAdmin.AddSingleTenantAsync(Input.TenantName, RoleNames);
-        //     if (status.HasErrors)
-        //     {
-        //         Message = status.GetAllErrors();
-        //         return;
-        //     }
-        // }
-        // catch (Exception ex)
-        // {
-        //     Message = ex.Message;
-        // }
-
-        // return status.HasErrors
-        //     ? RedirectToAction(nameof(ErrorDisplay),
-        //         new { errorMessage = status.GetAllErrors() })
-        //     : RedirectToAction(nameof(Index), new { message = status.Message });
     }
 
 
@@ -121,7 +111,7 @@
         [Required]
         [Display(Name = "tenantName")]
         public string TenantName { get; set; } = "";
-     
+
 
 
 
