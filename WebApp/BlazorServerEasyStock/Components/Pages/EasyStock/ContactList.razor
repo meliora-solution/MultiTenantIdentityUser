@@ -1,5 +1,8 @@
 ﻿@page "/contactList"
 
+@using AuthPermissions.BaseCode.CommonCode
+@using AuthPermissions.BaseCode.PermissionsCode
+@using AuthpServices.PermissionsCode
 @using BlazorServerEasyStock.IdentityAuthentication
 @using Microsoft.AspNetCore.Components.Authorization
 @using Newtonsoft.Json
@@ -21,8 +24,9 @@
     </div>
 }
 @*  <Stock.Component.NameFilter OnFilter="FilterNames" /> *@
-
-<FluentDataGrid Items="@Contacts" ResizableColumns=true GridTemplateColumns="0.2fr 0.2fr 0.3fr 0.3fr 0.2fr 0.3fr 0.2fr 0.2fr 0.2fr"
+@if (Contacts!=null && Contacts.Any())
+{
+    <FluentDataGrid Items="@Contacts" ResizableColumns=true GridTemplateColumns="0.2fr 0.2fr 0.3fr 0.3fr 0.2fr 0.3fr 0.2fr 0.2fr 0.2fr"
                 style="height: 580px;overflow:auto;">
 
     <PropertyColumn Property="@(c => c.ContactId)" Title="Id" Align="Align.Start" Sortable="true" />
@@ -42,6 +46,8 @@
 
 
 </FluentDataGrid>
+}
+
 
 
 @code {
@@ -60,16 +66,17 @@
     {
 
         try
-        {
-
+        {        
             var authenticationState = await customauthStateProvider.GetAuthenticationStateAsync();
             user = authenticationState.User;
+
             var AccessToken = await customauthStateProvider.GetAccessTokenAsync();
-            // cek expiration date
+
 
             httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", AccessToken);
-            var result = await httpClient.GetAsync("api/Contact/GetContact");
-          //  var result = await httpClient.GetAsync("https://localhost:44305/api/Contact/GetContact");
+
+            var result = await httpClient.GetAsync("https://localhost:44305/api/Contact/GetContact");
+            //  var result = await httpClient.GetAsync("https://localhost:44305/api/Contact/GetContact");
             if (result.IsSuccessStatusCode)
             {
                 if (result.StatusCode == System.Net.HttpStatusCode.NoContent)
@@ -93,12 +100,13 @@
                         contacts = deserializedContacts.AsQueryable();
                     }
                 }
-
-                Contacts = contacts ?? Enumerable.Empty<ContactDto>().AsQueryable();
+                Contacts = contacts ;
+               // Contacts = contacts ?? Enumerable.Empty<ContactDto>().AsQueryable();
+             
 
                 return;
             }
-            _dialogService.ShowInfo("Can no connect to server", "Error");
+            _dialogService.ShowInfo("Can not connect to server", "Error");
 
         }
 

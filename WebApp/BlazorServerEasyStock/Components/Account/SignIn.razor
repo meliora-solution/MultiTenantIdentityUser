@@ -41,17 +41,21 @@
     private string? ReturnUrl { get; set; }
     protected override async Task OnInitializedAsync()
     {
-      
+
     }
     private async Task HandleLogin()
     {
         Message = string.Empty;
         try
         {
+            _httpClient = new HttpClient();
+
+      
+            var response = await _httpClient.PostAsJsonAsync("https://localhost:44305/api/account/signin", LoginUser);
 
             // use IISExpress
 
-            var response = await _httpClient.PostAsJsonAsync("https://localhost:44305/api/auth-default/login", LoginUser);
+       //     var response = await _httpClient.PostAsJsonAsync("https://localhost:44305/api/auth-default/login", LoginUser);
             if (!response.IsSuccessStatusCode)
             {
                 Message = "Invalid Credentials";
@@ -62,7 +66,7 @@
             if (string.IsNullOrEmpty(result!.AccessToken)) return;
 
             _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", result.AccessToken);
-            var getUserClaims = await _httpClient.GetAsync("api/auth-default/manage/info");
+            var getUserClaims = await _httpClient.GetAsync("https://localhost:44305/api/auth-default/manage/info");
             if (!getUserClaims.IsSuccessStatusCode) return;
 
             var userDetails = await getUserClaims.Content.ReadFromJsonAsync<UserDetails>();

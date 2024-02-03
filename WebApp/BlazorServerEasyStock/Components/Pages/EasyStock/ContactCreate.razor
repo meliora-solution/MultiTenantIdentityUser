@@ -141,8 +141,7 @@
             _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", AccessToken);
 
 
-          //  var response = await _httpClient.PostAsJsonAsync("https://localhost:44305/api/Contact/Create", model);
-            var response = await _httpClient.PostAsJsonAsync("api/Contact/Create", model);
+            var response = await _httpClient.PostAsJsonAsync("https://localhost:44305/api/Contact/Create", model);
             // Assuming ServiceResponseDto<T> has a boolean property named "Success"
             var responseContent = await response.Content.ReadFromJsonAsync<ServiceResponseDto<bool>>();
 

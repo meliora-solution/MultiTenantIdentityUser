@@ -16,6 +16,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\..\ServiceLayer\AuthpServices\AuthpServices.csproj" />
 	  <ProjectReference Include="..\..\ServiceLayer\SharedServices\SharedServices.csproj" />
 	</ItemGroup>
 </Project>

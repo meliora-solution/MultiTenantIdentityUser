@@ -1,4 +1,6 @@
-﻿@using BlazorServerEasyStock.IdentityAuthentication
+﻿@using AuthPermissions.BaseCode.PermissionsCode
+@using AuthpServices.PermissionsCode
+@using BlazorServerEasyStock.IdentityAuthentication
 @using Microsoft.AspNetCore.Components.Authorization
 @using Newtonsoft.Json
 
@@ -17,38 +19,34 @@
             <FluentNavLink Href="weather" Icon="@(new Icons.Regular.Size20.WeatherPartlyCloudyDay())" IconColor="Color.Accent">Weather</FluentNavLink>
             <AuthorizeView>
                 <Authorized>
-                
-
-                        @if (roles != null)
-                    {
-                        if (roles.Contains("AccessPageLevelOne"))
+                 
+                      
+                      
+                        @if (roles != null && roles.Contains("AccessPageLevelOne"))
                         {
                             <FluentNavLink Href="contactList" Icon="@(new Icons.Regular.Size20.WeatherPartlyCloudyDay())" IconColor="Color.Accent">Contact List</FluentNavLink>
                             <FluentNavLink Href="contactCreate" Icon="@(new Icons.Regular.Size20.WeatherPartlyCloudyDay())" IconColor="Color.Accent">EasyStock Contact</FluentNavLink>
 
-
                         }
-                    }
-
 
 
                 </Authorized>
                 <NotAuthorized>
-           @*          <FluentNavMenu Id="main-menu" Width="250" Title="Navigation menu" @bind-Expanded="expanded">
-                        <FluentNavLink Href="signIn" Icon="@(new Icons.Regular.Size20.WeatherPartlyCloudyDay())" IconColor="Color.Accent">Sign In</FluentNavLink>
+                    @*          <FluentNavMenu Id="main-menu" Width="250" Title="Navigation menu" @bind-Expanded="expanded">
+                    <FluentNavLink Href="signIn" Icon="@(new Icons.Regular.Size20.WeatherPartlyCloudyDay())" IconColor="Color.Accent">Sign In</FluentNavLink>
                     </FluentNavMenu> *@
 
                 </NotAuthorized>
             </AuthorizeView>
         </FluentNavMenu>
-        
+
     </nav>
 </div>
 
 @code {
     private bool expanded = true;
     private System.Security.Claims.ClaimsPrincipal user;
-   
+
 
     List<string> roles = new List<string> { "User" };
 
@@ -56,25 +54,29 @@
     protected override async Task OnInitializedAsync()
     {
         var authenticationState = await customauthStateProvider.GetAuthenticationStateAsync();
+        //  var authenticationState = await authStateProvider.GetAuthenticationStateAsync();
         user = authenticationState.User;
+
+
 
         if (user.Identity.IsAuthenticated)
         {
+            bool flg = user.HasPermission(UserPermissions.AccessPageLevelOne);
             var AccessToken = await customauthStateProvider.GetAccessTokenAsync();
 
             httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", AccessToken);
 
-            var result = await httpClient.GetAsync("https://localhost:44305/api/Authenticate/getuserpermissions");
+            var result = await httpClient.GetAsync("api/Authenticate/getuserpermissions");
 
             if (result.IsSuccessStatusCode)
             {
                 var contentTemp = await result.Content.ReadAsStringAsync();
                 roles = JsonConvert.DeserializeObject<List<string>>(contentTemp);
 
-                
+
             }
         }
-      
+
     }
     private async Task Logout()
     {

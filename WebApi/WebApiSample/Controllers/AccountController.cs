@@ -1,8 +1,11 @@
 ﻿using Asp.Versioning;
+using Azure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Graph;
 using SharedServices.Models.Account;
+using System.Security.Claims;
 
 namespace WebApiSample.Controllers
 {
@@ -11,12 +14,13 @@ namespace WebApiSample.Controllers
     [ApiController]
     public class AccountController : ControllerBase
     {
-        private readonly IHttpClientFactory _httpClient;
+        private readonly HttpClient _httpClient;
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
+
         public AccountController(UserManager<IdentityUser> userManager,
                                 SignInManager<IdentityUser> signInManager,
-                                IHttpClientFactory httpClient)
+                                HttpClient httpClient)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -27,25 +31,36 @@ namespace WebApiSample.Controllers
         [Route("SignIn")]
         public async Task<IActionResult> SignIn([FromBody] LoginUser obj)
         {
-            //string Email = obj.Email;
-            //string Password = obj.Password;
-            var client = _httpClient.CreateClient();
+            /*
+                 returning with claims
+             https://stackoverflow.com/questions/45100238/net-core-cookie-authentication-signinasync-not-working
+         
+             Login Api EndPoint with cookies
+            'https://localhost:7029/api/auth-default/login?useCookies=false&useSessionCookies=true'
+
+             string uri = "https://localhost:44305/api/auth-default/login?useCookies=true";
+           
+             */
+
             try
             {
-                // 'https://localhost:7029/api/auth-default/login?useCookies=false&useSessionCookies=true' \
-                
-                // use IISExpress
+ 
 
-                string uri = "https://localhost:44305/api/auth-default/login?useSessionCookies=true";
-                var loginResponse = await client.PostAsJsonAsync(uri, obj);
+                string uri = "https://localhost:44305/api/auth-default/login";
+                var loginResponse = await _httpClient.PostAsJsonAsync(uri, obj);
+                //   var result = await loginResponse.Content.ReadFromJsonAsync<LoginResponse>();
 
-
-                var contentTemp = await loginResponse.Content.ReadAsStringAsync();
-                var result = await _signInManager.PasswordSignInAsync(obj.Email, obj.Password, true, false);
-                if (result.Succeeded)
+                if (loginResponse.IsSuccessStatusCode)
                 {
-                    return Ok();
+                    return Ok(await loginResponse.Content.ReadFromJsonAsync<LoginResponse>());
                 }
+                //var contentTemp = await loginResponse.Content.ReadAsStringAsync();
+                //var result = await _signInManager.PasswordSignInAsync(obj.Email, obj.Password, true, false);
+                //if (result.Succeeded)
+                //{
+
+                //    return Ok();
+                //}
             }
             catch (Exception ex)
             {

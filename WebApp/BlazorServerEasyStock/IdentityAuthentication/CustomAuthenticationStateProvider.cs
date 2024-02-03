@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Json;
 
@@ -77,6 +78,39 @@ namespace BlazorServerEasyStock.IdentityAuthentication
             // Notify that the authentication state has changed
             NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(anonymous)));
         }
+
+
+        public async  Task<AuthenticationState> GetAuthentication2StateAsync()
+        {
+            string authToken = await GetAccessTokenAsync();
+
+            var claimsPrincipal = new ClaimsIdentity();
+            httpClient.DefaultRequestHeaders.Authorization = null;
+
+            if (!string.IsNullOrEmpty(authToken))
+            {
+                try
+                {
+                    claimsPrincipal = new ClaimsIdentity(ParseClaimsFromJwt(authToken), "jwt");
+                    httpClient.DefaultRequestHeaders.Authorization =
+                        new AuthenticationHeaderValue("Bearer", authToken.Replace("\"", ""));
+                }
+                catch
+                {
+                    await ProtectedLocalStore.DeleteAsync("Authentication");
+                    claimsPrincipal = new ClaimsIdentity();
+                }
+            }
+
+            var user = new ClaimsPrincipal(claimsPrincipal);
+            var state = new AuthenticationState(user);
+
+            NotifyAuthenticationStateChanged(Task.FromResult(state));
+
+            return state;
+        }
+
+      
         public async override Task<AuthenticationState> GetAuthenticationStateAsync()
         {
             try
@@ -94,7 +128,7 @@ namespace BlazorServerEasyStock.IdentityAuthentication
                 return await Task.FromResult(new AuthenticationState(anonymous));
             }
         }
-
+        
         public async Task UpdateAuthenticationState(AuthenticationModel authenticationModel)
         {
             try
@@ -128,5 +162,27 @@ namespace BlazorServerEasyStock.IdentityAuthentication
         private AuthenticationModel Deserialize(string serializeString) => JsonSerializer.Deserialize<AuthenticationModel>(serializeString)!;
 
         private string Serialize(AuthenticationModel model) => JsonSerializer.Serialize(model);
+
+        private IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
+        {
+            var payload = jwt.Split('.')[1];
+            var jsonBytes = ParseBase64WithoutPadding(payload);
+            var keyValuePairs = JsonSerializer
+                .Deserialize<Dictionary<string, object>>(jsonBytes);
+
+            var claims = keyValuePairs.Select(kvp => new Claim(kvp.Key, kvp.Value.ToString()));
+
+            return claims;
+        }
+
+        private byte[] ParseBase64WithoutPadding(string base64)
+        {
+            switch (base64.Length % 4)
+            {
+                case 2: base64 += "=="; break;
+                case 3: base64 += "="; break;
+            }
+            return Convert.FromBase64String(base64);
+        }
     }
 }
