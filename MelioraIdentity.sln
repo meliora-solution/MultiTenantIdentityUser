@@ -29,6 +29,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasyStockServices", "Servic
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorServerEasyStock", "WebApp\BlazorServerEasyStock\BlazorServerEasyStock.csproj", "{30455144-C6CE-41C9-BAE6-7A1D3C1B04EA}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExamplesCommonCode", "ServiceLayer\ExamplesCommonCode\ExamplesCommonCode.csproj", "{C3CAFF68-337B-4B8D-853C-F79BFCF42D65}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +73,10 @@ Global
 		{30455144-C6CE-41C9-BAE6-7A1D3C1B04EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{30455144-C6CE-41C9-BAE6-7A1D3C1B04EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{30455144-C6CE-41C9-BAE6-7A1D3C1B04EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3CAFF68-337B-4B8D-853C-F79BFCF42D65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3CAFF68-337B-4B8D-853C-F79BFCF42D65}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3CAFF68-337B-4B8D-853C-F79BFCF42D65}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3CAFF68-337B-4B8D-853C-F79BFCF42D65}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -84,6 +90,7 @@ Global
 		{612286DF-7163-4BA4-A873-507AF304B1BB} = {06675928-E197-4030-9C19-B0307F912FA9}
 		{AAC070CD-5DCF-488E-993C-4C60A2E94786} = {06675928-E197-4030-9C19-B0307F912FA9}
 		{30455144-C6CE-41C9-BAE6-7A1D3C1B04EA} = {00500E17-B3A2-4AC8-A4C3-7A53D1C4A7F4}
+		{C3CAFF68-337B-4B8D-853C-F79BFCF42D65} = {06675928-E197-4030-9C19-B0307F912FA9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E3ECD894-C1FD-4E79-9F17-BF73DC864907}
