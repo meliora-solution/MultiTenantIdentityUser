@@ -1,0 +1,129 @@
+﻿@page "/tenant/create"
+
+@using System.ComponentModel.DataAnnotations
+@using AuthPermissions.AdminCode
+@using UserManagement.Components.Account.Shared
+
+@rendermode InteractiveServer
+
+@inject IAuthTenantAdminService _authTenantAdmin
+
+
+
+<FluentButton Type="ButtonType.Button" OnClick="Create" Appearance="Appearance.Accent" Style="width: 100%">Create Tenant</FluentButton>
+<FluentGrid>
+    <FluentGridItem xs="8" sm="4">
+        @Message
+        <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="Create" FormName="register">
+            <DataAnnotationsValidator />
+            <h2>Create Tenant.</h2>
+            <hr />
+            <FluentValidationSummary class="text-danger" role="alert" />
+            <FluentStack Orientation="Orientation.Vertical">
+                <FluentTextField Name="Input.TenantName" @bind-Value="Input.TenantName" AutoComplete="TenantName" Required="true" Label="Tenant Name" Style="width: 100%" />
+                <ValidationMessage For="() => Input.TenantName" class="text-danger" />
+
+               @*  <div style="width:100%;height: 200px; overflow-y: scroll;">
+                    <FluentSelect Items=@stringOptionsRoles
+                                  Label="Select RoleNames"
+                                  TOption="Option<string>"
+                                  Multiple=true
+                                  OptionText="@(i => i.Text)"
+                                  OptionValue="@(i => i.Value)"
+                                  OptionSelected="@(i => i.Selected)"
+                                  @bind-SelectedOptions="@selectedOptionsRoles"
+                                  @bind-Value="@stringValueRoleNames" />
+                </div>
+                <ValidationMessage For="() => stringValueRoleNames" class="text-danger" /> *@
+                <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Style="width: 100%">Create Tenant</FluentButton>
+            </FluentStack>
+        </EditForm>
+    </FluentGridItem>
+</FluentGrid>
+@code {
+    private string? Message = string.Empty;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+    List<Option<string>>? stringOptionsRoles = new();
+    List<string>? RoleNames = new List<string>();
+
+    string stringValueRoleNames;
+
+    IEnumerable<Option<string>> selectedOptionsRoles { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        List<string>? AllPossibleRoleNames = await _authTenantAdmin.GetRoleNamesForTenantsAsync();
+
+        foreach (var item in AllPossibleRoleNames)
+        {
+            stringOptionsRoles?.Add(new Option<string>
+                {
+                    Value = item,
+                    Text = item,
+                    Selected = false // You can set this based on your logic
+                });
+        }
+    }
+
+    public async Task Create()
+    {
+        // A service (method AddSingleTenantAsync) needed the ITenantChangeService service, but you haven't registered it.
+        // You can do this using the RegisterTenantChangeService configuration method.
+
+
+        RoleNames = new List<string>();
+        // if (selectedOptionsRoles != null)
+        // {
+        //     foreach (var item in selectedOptionsRoles)
+        //     {
+        //         RoleNames.Add(item.Value);
+
+        //     }
+        // }
+
+        var status = await _authTenantAdmin.AddSingleTenantAsync(Input.TenantName, RoleNames);
+        if (status.HasErrors)
+        {
+            Message = status.GetAllErrors();
+            return;
+        }
+        // try
+        // {
+
+
+
+        //     var status = await _authTenantAdmin.AddSingleTenantAsync(Input.TenantName, RoleNames);
+        //     if (status.HasErrors)
+        //     {
+        //         Message = status.GetAllErrors();
+        //         return;
+        //     }
+        // }
+        // catch (Exception ex)
+        // {
+        //     Message = ex.Message;
+        // }
+
+        // return status.HasErrors
+        //     ? RedirectToAction(nameof(ErrorDisplay),
+        //         new { errorMessage = status.GetAllErrors() })
+        //     : RedirectToAction(nameof(Index), new { message = status.Message });
+    }
+
+
+    private sealed class InputModel
+    {
+        [Required]
+        [Display(Name = "tenantName")]
+        public string TenantName { get; set; } = "";
+     
+
+
+
+    }
+}

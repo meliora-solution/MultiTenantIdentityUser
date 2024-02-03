@@ -1,0 +1,70 @@
+﻿@page "/rolelist"
+@using AuthPermissions.AdminCode
+@using AuthPermissions.AspNetCore
+@using AuthPermissions.BaseCode.PermissionsCode
+@using AuthpServices.PermissionsCode
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+
+
+<h3>RoleList</h3>
+
+@rendermode InteractiveServer
+
+@attribute  [HasPermission(UserPermissions.RoleRead)]
+@inject IAuthRolesAdminService _authRolesAdmin
+@inject AuthenticationStateProvider authStateProvider
+
+@if (RoleToPermissionDisplay != null)
+{
+    <FluentDataGrid Items="@RoleToPermissionDisplay" ResizableColumns=true GridTemplateColumns="0.2fr 0.2fr 0.3fr 0.3fr"
+                    style="height: 580px;overflow:auto;">
+
+        <PropertyColumn Property="@(c => c.RoleName)" Title="RoleName" Align="Align.Start" Sortable="true" />
+        <PropertyColumn Property="@(c => c.Description)" Title="Description" Align="Align.Start" Sortable="true" />
+        <PropertyColumn Property="@(c => c.RoleType)" Title="RoleType" Align="Align.Start" Sortable="false" />
+ 
+        <TemplateColumn Title="#Permission" Align="Align.Start">
+             <div>
+                <a href="rolelist" target="_self" data-toggle="tooltip" title='@string.Join(", ",context.PermissionNames)'>
+                    @(context.PermissionNames.Count)
+                </a>
+            </div>
+        
+        </TemplateColumn>
+      
+
+    </FluentDataGrid>
+}
+
+
+@code {
+
+    private string? UserId { get; set; }
+    private System.Security.Claims.ClaimsPrincipal user;
+    private IQueryable<RoleWithPermissionNamesDto>? RoleToPermissionDisplay;
+
+    protected async override void OnInitialized()
+    {
+        var authenticationState = await authStateProvider.GetAuthenticationStateAsync();
+        user = authenticationState.User;
+        UserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        RoleToPermissionDisplay = (_authRolesAdmin.QueryRoleToPermissions(UserId).OrderBy(x => x.RoleType).ToList()).AsQueryable();
+    }
+
+    // private string? UserId { get; set; }
+    // private System.Security.Claims.ClaimsPrincipal user;
+    // private IQueryable<RoleWithPermissionNamesDto>? RoleToPermissionDisplay;
+
+    // protected async override void OnInitialized()
+    // {
+    //     var authenticationState = await authStateProvider.GetAuthenticationStateAsync();
+    //     user = authenticationState.User;
+    //     UserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+    //     RoleToPermissionDisplay =  (_authRolesAdmin.QueryRoleToPermissions(UserId).ToList()).AsQueryable();
+    // }
+
+
+}

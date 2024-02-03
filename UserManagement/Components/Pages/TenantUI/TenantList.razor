@@ -1,20 +1,24 @@
-﻿@page "/tenantlist"
+﻿@page "/tenant/tenantlist"
 @using AuthPermissions.AdminCode
 @using AuthPermissions.AspNetCore
+@using AuthPermissions.BaseCode.PermissionsCode
 @using AuthpServices.Models
 @using AuthpServices.PermissionsCode
 @using Microsoft.EntityFrameworkCore
 
 
 <h3>Tenant List</h3>
+
 <PageTitle>TenantList</PageTitle>
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 @rendermode InteractiveServer
 
 @attribute [HasPermission(UserPermissions.TenantList)]
 
 @inject IAuthTenantAdminService auth;
-
+<FluentButton Type="ButtonType.Button" Appearance="Appearance.Accent" OnClick="CreateTenant">Create new Tenant</FluentButton>
 <br />
 @if (tenantNames == null)
 {
@@ -23,25 +27,50 @@
 else
 {
 
-    <FluentDataGrid Items="@tenantNames">
-        <PropertyColumn Property="@(p => p.TenantId)" Sortable="true" />
+    <FluentDataGrid Items="@tenantNames" ResizableColumns=true GridTemplateColumns="0.2fr 0.2fr 0.3fr 0.3fr 0.3fr">
+
         <PropertyColumn Property="@(p => p.TenantName)" Sortable="true" />
-        <PropertyColumn Property="@(p => p.TenantRolesName)" Sortable="true" />
         <PropertyColumn Property="@(p => p.DataKey)" Sortable="true" />
+        <TemplateColumn Title="Tenant Roles?" Align="Align.Start">
+            <div>
+                <a href="tenantlist" target="_self" data-toggle="tooltip" title='@string.Join(", ",context.TenantRolesName)'>
+                    @(context.TenantRolesName.Any() ? $"{context.TenantRolesName.Count} tenant roles" : "No tenant roles")
+                </a>
+            </div>
+
+        </TemplateColumn>
+        <TemplateColumn Title="Change" Align="Align.Start">
+            @if (user.HasPermission(UserPermissions.TenantUpdate))
+            {
+                <FluentButton IconStart="@(new Icons.Regular.Size20.Edit())" BackgroundColor="var(--inherit-bg)" Color="var(--error)" Title="Edit" OnClick="@(() => Edit(context.TenantId))" />
+                <FluentButton IconStart="@(new Icons.Regular.Size20.Delete())" BackgroundColor="var(--inherit-bg)" Color="var(--danger)" Title="Delete" OnClick="@(() => Delete(context.TenantId))" />
+            }
+            @if (user.HasPermission(UserPermissions.TenantAccessData))
+            {
+                <FluentButton IconStart="@(new Icons.Regular.Size20.Accessibility())" BackgroundColor="var(--inherit-bg)" Color="var(--error)" Title="Access Data" OnClick="@(() => StartAccess(context.TenantId))" />
+
+            }
+        </TemplateColumn>
     </FluentDataGrid>
 }
 
-@* <FluentButton IconStart="@(new Icons.Regular.Size16.Globe())" OnClick="GetData">
-    Button
-</FluentButton> *@
+@*
+     <a href="#" data-toggle="tooltip" title='@string.Join(", ", item.TenantRolesName)'>
+                    @(item.TenantRolesName.Any() ? $"{item.TenantRolesName.Count} tenant roles" : "No tenant roles")
+                </a>
+
+*@
 
 @code {
 
     private IEnumerable<SingleLevelTenantDto> tenantNamesEnu;
     private IQueryable<SingleLevelTenantDto> tenantNames;
+    private System.Security.Claims.ClaimsPrincipal user;
 
     protected override async Task OnInitializedAsync()
     {
+        var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        user = authenticationState.User;
         await GetData();
     }
     private async Task GetData()
@@ -54,5 +83,59 @@ else
 
 
     }
+    private async void CreateTenant()
+    {
+        _navman.NavigateTo($"/tenant/create");
+    }
+    private async void Edit(int Id)
+    {
+        // _navman.NavigateTo($"contactUpdate/{Id}");
+    }
+    private async void StartAccess(int Id)
+    {
 
+    }
+    private async void Delete(int Id)
+    {
+        try
+        {
+            // var dialog = await _dialogService.ShowConfirmationAsync("Are you sure you want to Delete?", "Ok", "No", "Delete Data");
+            // var dlgresult = await dialog.Result;
+
+            // canceled = dlgresult.Cancelled;
+
+            // if (canceled == null || (canceled == true))
+            // {
+            //     _dialogService.ShowInfo("Delete cancelled", "Delete");
+            //     return;
+            // }
+
+
+
+            // IsLoading = true;
+            // // await Task.Delay(200);
+            // ServiceResponseDTO<bool> result = new();
+            // result = await _contactServices.DeleteAsync(Id);
+
+            // IsLoading = false;
+
+            // if (result.Success == true)
+            // {
+            //     _dialogService.ShowInfo(result.Message, "Delete");
+            // }
+            // else
+            // {
+            //     _dialogService.ShowWarning(result.Message, "Delete");
+            // }
+            // result = new();
+            // await Loading();
+            // StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            // string msg = ex.Message;
+            // IsLoading = false;
+            return;
+        }
+    }
 }

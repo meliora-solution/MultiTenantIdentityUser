@@ -23,55 +23,63 @@
 @attribute [HasPermission(UserPermissions.InviteUsers)]
 @inject SendEmailServices _sendEmailServices
 
+@if (IsLoading == true)
+{
+    <div style="width: 300px; display: grid; grid-gap: 12px; grid-auto-flow: column;">
+        <FluentProgress></FluentProgress>
+    </div>
+}
 
-<FluentGrid>
+    <FluentGrid>
     <FluentGridItem xs="8" sm="4">
-        <FluentLabel><h6>@Message</h6></FluentLabel>
-        <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="InviteNewUser" FormName="InviteNewUser">
-            <DataAnnotationsValidator />
+         <FluentLabel><h6>@Message</h6></FluentLabel>
+            <EditForm Model="@Input" OnValidSubmit="@InviteNewUser" >
+                <DataAnnotationsValidator />
+                <FluentValidationSummary />
             <h2>Invite New User.</h2>
             <hr />
-            <FluentValidationSummary class="text-danger" role="alert" />
+          
             <FluentStack Orientation="Orientation.Vertical">
-                <FluentTextField Name="Input.Email" @bind-Value="Input.Email" AutoComplete="username" Required="true" Placeholder="name@example.com" Label="Email" Style="width: 100%" />
+                <FluentTextField Name="Input.Email" @bind-Value="Input.Email"
+                                 Required="true" Placeholder="name@example.com" Label="Email" Style="width: 100%" />
+
                 <ValidationMessage For="() => Input.Email" class="text-danger" />
 
 
-
                 <div style="width:100%;height: 100px; overflow-y: scroll;">
-                     <FluentSelect Position="SelectPosition.Below" 
-                                    Items=@stringOptionsExpiration
-                                    Label="Select Expiration"
-                                    OptionText="@(i => i.Text)"
-                                    OptionValue="@(i => i.Value)"
-                                    OptionSelected="@(i => i.Selected)"
-                                    @bind-SelectedOption="@selectedExpirationId"
-                                    @bind-Value="@stringValueExpiration" />
+                    <FluentSelect Position="SelectPosition.Below"
+                                  Items=@stringOptionsExpiration
+                                  Label="Select Expiration"
+                                  OptionText="@(i => i.Text)"
+                                  OptionValue="@(i => i.Value)"
+                                  OptionSelected="@(i => i.Selected)"
+                                  @bind-SelectedOption="@selectedExpirationId"
+                                  @bind-Value="@stringValueExpiration" />
                 </div>
 
 
-
-             
                 <div style="width:100%;height: 200px; overflow-y: scroll;">
                     <FluentSelect Items=@stringOptionsRoles
                                   Label="Select RoleNames"
-                                  Required="true"
                                   TOption="Option<string>"
                                   Multiple=true
                                   OptionText="@(i => i.Text)"
                                   OptionValue="@(i => i.Value)"
                                   OptionSelected="@(i => i.Selected)"
                                   @bind-SelectedOptions="@selectedOptionsRoles"
-                                  @bind-Value="@Input.stringValueRoleNames" />
+                                  @bind-Value="@stringValueRoleNames" />
 
                 </div>
-                <ValidationMessage For="() => Input.stringValueRoleNames" class="text-danger" />
 
-                <FluentButton Type="ButtonType.Button" OnClick="InviteNewUser" Appearance="Appearance.Accent" Style="width: 100%">Invite User</FluentButton>
+
+                <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Style="width: 100%">Invite User</FluentButton>
             </FluentStack>
         </EditForm>
     </FluentGridItem>
 </FluentGrid>
+
+
+
 <p>
     <FluentTextArea @bind-Value=InvitationLink style="width: 100%;" Label="Invitation Link:" />
 </p>
@@ -80,7 +88,7 @@
     private string? Message = string.Empty;
     private string? InvitationLink = string.Empty;
     private string? UserId;
-
+    private bool IsLoading { get; set; } = false;
     List<Option<string>>? stringOptionsRoles = new();
     List<string>? RoleNames =new List<string>();
     string stringValueRoleNames;
@@ -150,13 +158,15 @@
             Message = "Please enter the email address of someone you want to invite to join.";
             return;
         }
+        long ExpirationId = Convert.ToInt64(selectedExpirationId?.Value);
         stringValueRoleNames = selectedOptionsRoles != null ? string.Join(',', selectedOptionsRoles.Select(o => o.Value)) : "";
-        if (string.IsNullOrEmpty(Input.stringValueRoleNames))
+
+        if (string.IsNullOrEmpty(stringValueRoleNames))
         {
             Message = "Please select at least one role.";
             return;
         }
-        long ExpirationId = Convert.ToInt64(selectedExpirationId?.Value);
+
 
         RoleNames = new List<string>();
 
@@ -173,7 +183,7 @@
             }
             else
             {
-                 RoleNames.Add(item.Value);
+                RoleNames.Add(item.Value);
             }
         }
 
@@ -185,6 +195,7 @@
                 TimeInviteExpires = ExpirationId
             };
 
+        IsLoading = true;
 
         var status = await inviteUserServiceService.CreateInviteUserToJoinAsync(addUserData, UserId);
 
@@ -209,7 +220,7 @@
 
         }
 
-
+        IsLoading = false;
 
     }
     public string AbsoluteAction(string pageName, object routeValues = null)
@@ -238,10 +249,10 @@
 
     private sealed class InputModel
     {
+        [Required]
+        [EmailAddress]
+        [Display(Name = "Email")]
         public string Email { get; set; } = "";
-        public string stringValueRoleNames { get; set; }
-        public string stringValueExpiration { get; set; }
-      
 
     }
 }

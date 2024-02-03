@@ -1,0 +1,96 @@
+﻿@page "/CreateRole"
+@using AuthPermissions.AdminCode
+@using AuthPermissions.AspNetCore
+@using AuthpServices.PermissionsCode
+@using System.ComponentModel.DataAnnotations
+@using CommonAdmin
+@using UserManagement.Components.Account.Shared
+
+
+@attribute [HasPermission(UserPermissions.RoleChange)]
+
+@inject IAuthRolesAdminService _authRolesAdmin;
+
+<FluentGrid>
+    <FluentGridItem xs="8" sm="4">
+        <StatusMessage Message="@Message" />
+        <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="OnValidSubmit" FormName="createRole">
+            <DataAnnotationsValidator />
+            <h2>Create a new Role.</h2>
+            <hr />
+            <FluentValidationSummary class="text-danger" role="alert" />
+            <FluentStack Orientation="Orientation.Vertical">
+                <FluentTextField Name="Input.RoleName" @bind-Value="Input.RoleName" AutoComplete="RoleName" Required="true" Label="Role Name" Style="width: 100%" />
+                <ValidationMessage For="() => Input.RoleName" class="text-danger" />
+
+                <FluentTextField Name="Input.Description" @bind-Value="Input.Description" AutoComplete="description" Required="true" Label="Desciption" Style="width: 100%" />
+             
+        @*         <FluentTextField Name="Input.RoleType" @bind-Value="Input.RoleType" AutoComplete="RoleType" Required="true"  Label="RoleType" Style="width: 100%" />
+       *@          
+       <ValidationMessage For="() => Input.RoleType" class="text-danger" />
+                <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Style="width: 100%">Create Role</FluentButton>
+            </FluentStack>
+        </EditForm>
+
+    </FluentGridItem>
+</FluentGrid>
+
+@* 
+
+<FluentDataGrid Items="@Contacts" ResizableColumns=true GridTemplateColumns="0.2fr 0.2fr 0.3fr 0.3fr 0.2fr 0.3fr 0.2fr 0.2fr 0.2fr"
+                style="height: 580px;overflow:auto;">
+
+    <PropertyColumn Property="@(c => c.GroupName)" Title="Group" Align="Align.Start" Sortable="true" />
+    <PropertyColumn Property="@(c => c.Description)" Title="Description" Align="Align.Start" Sortable="false" />
+    <PropertyColumn Property="@(c => c.PermissionName)" Title="Permission" Align="Align.Start" Sortable="false" />
+    <PropertyColumn Property="@(c => c.Selected)" Title="Address" Align="Align.Start" Sortable="true" />
+  
+
+    <TemplateColumn Title="Actions" Align="@Align.End">
+        <FluentButton IconEnd="@(new Icons.Regular.Size16.Edit())"  BackgroundColor="var(--inherit-bg)" Appearance="Appearance.Stealth" Title="Edit"
+                      Color="Color.Warning" OnClick="@(() => Edit(context.ContactId))" />
+        <FluentButton IconEnd="@(new Icons.Regular.Size16.Delete())" BackgroundColor="var(--inherit-bg)" Appearance="Appearance.Stealth" Title="Delete"
+                      Color="var(--danger)" OnClick="@(() => Delete(context.ContactId))" />
+    </TemplateColumn>
+
+
+</FluentDataGrid>
+
+
+ *@
+@code {
+
+
+  
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+    private string? Message = string.Empty;
+    RoleCreateUpdateDto Input { get; set; } = new();
+
+    public async Task OnValidSubmit(EditContext editContext)
+    {
+        var status = await _authRolesAdmin
+               .CreateRoleToPermissionsAsync(Input.RoleName, Input.GetSelectedPermissionNames(), Input.Description, Input.RoleType);
+
+        // if (status.HasErrors)
+        //     return RedirectToAction(nameof(ErrorDisplay),
+        //         new { errorMessage = status.GetAllErrors() });
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        [Display(Name = "RoleName")]
+        public string RoleName { get; set; }
+
+
+        [Display(Name = "Description")]
+        public string Description { get; set; }
+
+        [Required]
+        [Display(Name = "RoleType")]
+        public string RoleType { get; set; }
+
+    }
+}
