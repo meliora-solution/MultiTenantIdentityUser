@@ -1,5 +1,6 @@
 ﻿@using UserManagement.Components.Shared
 @inherits LayoutComponentBase
+
 <FluentLayout>
     <FluentHeader>
         User Management
@@ -11,6 +12,9 @@
         <FluentBodyContent>
             <div class="content">
                 @Body
+                <FluentDialogProvider @rendermode="RenderMode.InteractiveServer" />
+                <FluentToastProvider />
+                <FluentTooltipProvider />
             </div>
         </FluentBodyContent>
     </FluentStack>
@@ -23,5 +27,9 @@
         </div>
     </FluentFooter>
 </FluentLayout>
-<FluentDialogProvider />
 
+@* 
+FluentUI RenderMode for FluentDialogProvider
+https://stackoverflow.com/questions/77736914/blazor-fluent-ui-dialogservice-fluentdialogprovider-error
+
+*@

@@ -1,0 +1,223 @@
+﻿@page "/role/edit/{roleName}"
+
+@using AuthPermissions.AdminCode
+@using AuthPermissions.AspNetCore
+@using AuthPermissions.BaseCode.DataLayer.Classes.SupportTypes
+@using AuthPermissions.BaseCode.PermissionsCode
+@using AuthpServices.PermissionsCode
+@using CommonAdmin
+@using System.Security.Claims
+@using Microsoft.EntityFrameworkCore
+
+
+@attribute [HasPermission(UserPermissions.RoleChange)]
+@rendermode InteractiveServer
+@inject AuthenticationStateProvider authStateProvider
+
+@inject IAuthRolesAdminService _authRolesAdmin;
+
+<FluentGrid>
+    <FluentGridItem xs="8" sm="4">
+        <FluentLabel><h6>@Message</h6></FluentLabel>
+        <EditForm Model="Input" OnValidSubmit="@OnValidSubmit">
+            <DataAnnotationsValidator />
+            <h2>Edit Role : @roleName</h2>
+            <hr />
+            <FluentValidationSummary />
+            <FluentStack Orientation="Orientation.Vertical">
+                   <FluentSelect Items=@stringOptionsRoles
+                              Label="Select RoleNames"
+                              OptionText="@(i => i.Text)"
+                              OptionValue="@(i => i.Value)"
+                              OptionSelected="@(i => i.Selected)"
+                              @bind-SelectedOption="@selectedOptionsRoles"
+                              @bind-Value="@stringValueRoleNames" />
+
+                <FluentTextField Name="Input.Description" @bind-Value="Input.Description" Required="true" Label="Desciption" Style="width: 100%" />
+
+                <ValidationMessage For="() => Input.Description" class="text-danger" />
+                <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Update Role</FluentButton>
+            </FluentStack>
+        </EditForm>
+
+    </FluentGridItem>
+</FluentGrid>
+
+<FluentGrid>
+    <FluentGridItem xs="8" sm="6">
+        @if (Permissionselect != null)
+        {
+            <FluentDataGrid Items="@Permissionselect" ResizableColumns=true GridTemplateColumns="0.3fr 0.3fr 0.3fr "
+                            style="height: 580px;overflow:auto;">
+           
+                <PropertyColumn Property="@(c => c.Description)" Title="Description" Align="Align.Start" Sortable="false" />
+                <PropertyColumn Property="@(c => c.PermissionName)" Title="Permission" Align="Align.Start" Sortable="false" />
+                <TemplateColumn Title="Select" Align="Align.Start">
+                    @if (context.Selected)
+                    {
+                        <FluentButton BackgroundColor="#0d6efd" OnClick="@(() => IsSelected(context))"
+                                      Color="#fff">Selected</FluentButton>
+                    }
+                    else
+                    {
+                        <FluentButton BackgroundColor="var(--neutral-layer-3)" OnClick="@(() => IsSelected(context))"
+                                      Color="var(--info)">Select</FluentButton>
+                    }
+                  @*   <FluentSwitch ValueChanged="@(() => IsSelected(context))">Select </FluentSwitch> 
+                   <FluentSwitch @bind-Value=@context.Selected>Select </FluentSwitch>
+                  <FluentSwitch @bind-Value=@context.Selected >Select </FluentSwitch>*@
+                </TemplateColumn>
+            </FluentDataGrid>
+        }
+    </FluentGridItem>
+</FluentGrid>
+
+
+@code {
+    private string? UserId { get; set; }
+    private System.Security.Claims.ClaimsPrincipal user;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    [Parameter]
+    public string? roleName { get; set; }
+
+    private string? Message = string.Empty;
+    RoleCreateUpdateDto Input { get; set; } = new();
+
+    List<Option<string>>? stringOptionsRoles = new();
+    List<string>? RoleNames = new List<string>();
+    string stringValueRoleNames;
+
+    Option<string> selectedOptionsRoles = default!;
+
+    IQueryable<RoleTypes> roletypeValues;
+
+    private IQueryable<PermissionDisplay>? Permissions;
+    private IQueryable<PermissionInfoWithSelectDto>? Permissionselect;
+
+    List<string>? PermissionSelected = new();
+
+    RoleWithPermissionNamesDto? role;
+
+    void IsSelected(PermissionInfoWithSelectDto p)
+    {
+        p.Selected = !p.Selected;
+      
+
+        if (p.Selected)
+        {
+            PermissionSelected.Add(p.PermissionName);
+        }
+        else
+        {
+            PermissionSelected.Remove(p.PermissionName);
+        }
+
+
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        var authenticationState = await authStateProvider.GetAuthenticationStateAsync();
+        user = authenticationState.User;
+        UserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        ReturnUrl = "rolelist";
+
+        role = await
+            _authRolesAdmin.QueryRoleToPermissions(UserId).SingleOrDefaultAsync(x => x.RoleName == roleName);
+
+        Input.RoleName = roleName;
+        Input.Description = role.Description;
+        PermissionSelected = role.PermissionNames;
+
+        var roleType = role.RoleType;
+
+
+
+        Permissions = (_authRolesAdmin.GetPermissionDisplay(false)).AsQueryable();
+        initialPermissionSelect();
+        StateHasChanged();
+        roletypeValues = (Enum.GetValues(typeof(RoleTypes)).Cast<RoleTypes>()).AsQueryable();
+
+        foreach (var item in roletypeValues)
+        {
+            stringOptionsRoles?.Add(new Option<string>
+                {
+                    Value = ((byte)item).ToString(),
+                    Text = item.ToString(),
+                    Selected = (item.ToString() == roleType.ToString())
+                });
+        }
+    }
+    void initialPermissionSelect()
+    {
+
+        // Projecting values into PermissionInfoWithSelectDto with Selected=false
+        Permissionselect = Permissions.Select(p => new PermissionInfoWithSelectDto
+            {
+                GroupName = p.GroupName,
+                Description = p.Description,
+                PermissionName = p.PermissionName,
+                Selected = role.PermissionNames.Contains(p.PermissionName)  // Set the Selected property to false
+            }).AsQueryable();
+       
+        Message = string.Empty;
+
+    }
+    public async Task OnValidSubmit(EditContext editContext)
+    {
+      
+
+        if (string.IsNullOrEmpty(stringValueRoleNames))
+        {
+            Message = "Please select one role.";
+            return;
+        }
+
+        // Assuming selectedOptionsRoles?.Value is a string representation of the numeric value
+        if (byte.TryParse(selectedOptionsRoles?.Value, out byte roleTypeValue))
+        {
+            // Use Enum.Parse to convert the numeric value back to RoleTypes enum
+            Input.RoleType = (RoleTypes)Enum.Parse(typeof(RoleTypes), roleTypeValue.ToString());
+        }
+        else
+        {
+            // Handle the case where parsing fails
+            // You might want to throw an exception, provide a default value, or handle it in some way
+            Message = "Something wrong";
+            return;
+        }
+
+        try
+        {
+
+
+            if (PermissionSelected?.Count() == 0)
+            {
+                Message = "Please select at least one permission.";
+                return;
+            }
+        
+
+            var status = await _authRolesAdmin
+                        .UpdateRoleToPermissionsAsync(Input.RoleName, PermissionSelected, Input.Description, Input.RoleType);
+
+            if (status.HasErrors)
+            {
+                Message = status.GetAllErrors();
+                return;
+            }
+         
+
+            _navman.NavigateTo(ReturnUrl);
+        }
+        catch (Exception ex)
+        {
+            Message = ex.Message;
+        }
+    }
+
+
+
+}
