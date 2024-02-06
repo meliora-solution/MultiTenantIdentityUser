@@ -1,7 +1,10 @@
-﻿@page "/tenant/create"
+﻿@page "/tenant/edit/{Id:int}"
+
+<h3>TanantEdit</h3>
 
 @using System.ComponentModel.DataAnnotations
 @using AuthPermissions.AdminCode
+@using AuthpServices.Models
 @using UserManagement.Components.Account.Shared
 @using UserManagement.Services
 
@@ -11,13 +14,18 @@
 @inject NavigationService _navServices;
 
 <FluentIcon Value="@(new Icons.Regular.Size16.ArrowLeft())" Color="Color.Neutral" Slot="start" OnClick="_navServices.GoBack" />
-
+@if (IsLoading == true)
+{
+    <div style="width: 300px; display: grid; grid-gap: 12px; grid-auto-flow: column;">
+        <FluentProgress></FluentProgress>
+    </div>
+}
 <FluentGrid>
     <FluentGridItem xs="8" sm="4">
         <FluentLabel><h6>@Message</h6></FluentLabel>
-        <EditForm Model="Input" OnValidSubmit="@Create">
+        <EditForm Model="Input" OnValidSubmit="@Edit">
             <DataAnnotationsValidator />
-            <h2>Create Tenant.</h2>
+            <h2>Edit Tenant.</h2>
             <hr />
             <FluentValidationSummary />
             <FluentStack Orientation="Orientation.Vertical">
@@ -42,6 +50,8 @@
 </FluentGrid>
 @code {
     private string? Message = string.Empty;
+    [Parameter]
+    public int Id { get; set; } // TenantId
 
     [SupplyParameterFromForm]
     private InputModel Input { get; set; } = new();
@@ -53,57 +63,62 @@
     string stringValueRoleNames;
 
     IEnumerable<Option<string>> selectedOptionsRoles { get; set; }
+    bool? canceled;
+    private bool IsLoading = false;
 
-  
     protected override async Task OnInitializedAsync()
     {
-        List<string>? AllPossibleRoleNames = await _authTenantAdmin.GetRoleNamesForTenantsAsync();
+        SingleLevelTenantDto tenant = await SingleLevelTenantDto.SetupForUpdateAsync(_authTenantAdmin, Id);
 
-        foreach (var item in AllPossibleRoleNames)
+        Input.TenantName = tenant.TenantName;
+        RoleNames = tenant.TenantRolesName;
+
+
+        foreach (var item in RoleNames)
         {
             stringOptionsRoles?.Add(new Option<string>
                 {
                     Value = item,
                     Text = item,
-                    Selected = false // You can set this based on your logic
+                    Selected = true // You can set this based on your logic
                 });
         }
+
+        ReturnUrl = "/tenant/tenantlist";
     }
 
-    public async Task Create()
+    public async Task Edit()
     {
-        // A service (method AddSingleTenantAsync) needed the ITenantChangeService service, but you haven't registered it.
-        // You can do this using the RegisterTenantChangeService configuration method.
 
-        stringValueRoleNames = selectedOptionsRoles != null ? string.Join(',', selectedOptionsRoles.Select(o => o.Value)) : "";
-        if (string.IsNullOrEmpty(stringValueRoleNames))
-        {
-            Message = "Please select at least one role.";
-            return;
-        }
-        RoleNames = new List<string>();
-        if (selectedOptionsRoles != null)
-        {
-            foreach (var item in selectedOptionsRoles)
-            {
-                RoleNames.Add(item.Value);
 
-            }
-        }
-        
         try
         {
-           var status = await _authTenantAdmin.AddSingleTenantAsync(Input.TenantName, RoleNames);
+            var dialog = await _dialogService.ShowConfirmationAsync("Are you sure you want to update? : " + Input.TenantName , "Ok", "No", "Update Data");
+            var dlgresult = await dialog.Result;
+
+            canceled = dlgresult.Cancelled;
+
+            if (canceled == null || (canceled == true))
+            {
+                _dialogService.ShowInfo("Update cancelled", "Update");
+                return;
+            }
+            IsLoading = true;
+
+            var status = await _authTenantAdmin.UpdateTenantNameAsync(Id, Input.TenantName);
+            IsLoading = false;
 
             if (status.HasErrors)
             {
                 Message = status.GetAllErrors();
                 return;
             }
+
+            _navman.NavigateTo(ReturnUrl);
         }
         catch (Exception ex)
         {
-            Message =ex.Message;
+            Message = ex.Message;
         }
 
     }

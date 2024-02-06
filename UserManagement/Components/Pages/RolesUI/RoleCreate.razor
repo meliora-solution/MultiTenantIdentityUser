@@ -8,13 +8,16 @@
 @using System.ComponentModel.DataAnnotations
 @using CommonAdmin
 @using UserManagement.Components.Account.Shared
+@using UserManagement.Services
 
 
 @attribute [HasPermission(UserPermissions.RoleChange)]
  @rendermode InteractiveServer
 
 @inject IAuthRolesAdminService _authRolesAdmin;
+@inject NavigationService _navServices;
 
+<FluentIcon Value="@(new Icons.Regular.Size16.ArrowLeft())" Color="Color.Neutral" Slot="start" OnClick="_navServices.GoBack" />
 
 <FluentGrid>
     <FluentGridItem xs="8" sm="4">
@@ -59,7 +62,6 @@
                 <PropertyColumn Property="@(c => c.Description)" Title="Description" Align="Align.Start" Sortable="false" />
                 <PropertyColumn Property="@(c => c.PermissionName)" Title="Permission" Align="Align.Start" Sortable="false" />
                 <TemplateColumn Title="Select" Align="Align.Start">
-               @*   <FluentSwitch ValueChanged="@(() => IsSelected(context))" /> *@
                     @if (context.Selected)
                     {
                         <FluentButton BackgroundColor="#0d6efd" OnClick="@(() => IsSelected(context))"
@@ -102,8 +104,7 @@
 
     List<string>? PermissionSelected = new();
 
-
-
+   
 
     void IsSelected(PermissionInfoWithSelectDto p)
     {

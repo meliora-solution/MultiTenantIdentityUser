@@ -8,6 +8,7 @@
 @using CommonAdmin
 @using System.Security.Claims
 @using Microsoft.EntityFrameworkCore
+@using UserManagement.Services
 
 
 @attribute [HasPermission(UserPermissions.RoleChange)]
@@ -15,7 +16,14 @@
 @inject AuthenticationStateProvider authStateProvider
 
 @inject IAuthRolesAdminService _authRolesAdmin;
+<FluentIcon Value="@(new Icons.Regular.Size16.ArrowLeft())" Color="Color.Neutral"  Slot="start" OnClick="_navServices.GoBack" />
 
+@if (IsLoading == true)
+{
+    <div style="width: 300px; display: grid; grid-gap: 12px; grid-auto-flow: column;">
+        <FluentProgress></FluentProgress>
+    </div>
+}
 <FluentGrid>
     <FluentGridItem xs="8" sm="4">
         <FluentLabel><h6>@Message</h6></FluentLabel>
@@ -63,9 +71,7 @@
                         <FluentButton BackgroundColor="var(--neutral-layer-3)" OnClick="@(() => IsSelected(context))"
                                       Color="var(--info)">Select</FluentButton>
                     }
-                  @*   <FluentSwitch ValueChanged="@(() => IsSelected(context))">Select </FluentSwitch> 
-                   <FluentSwitch @bind-Value=@context.Selected>Select </FluentSwitch>
-                  <FluentSwitch @bind-Value=@context.Selected >Select </FluentSwitch>*@
+       
                 </TemplateColumn>
             </FluentDataGrid>
         }
@@ -75,7 +81,7 @@
 
 @code {
     private string? UserId { get; set; }
-    private System.Security.Claims.ClaimsPrincipal user;
+    private System.Security.Claims.ClaimsPrincipal? user;
 
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
@@ -100,12 +106,12 @@
     List<string>? PermissionSelected = new();
 
     RoleWithPermissionNamesDto? role;
+    bool? canceled;
+    private bool IsLoading = false;
 
     void IsSelected(PermissionInfoWithSelectDto p)
     {
         p.Selected = !p.Selected;
-      
-
         if (p.Selected)
         {
             PermissionSelected.Add(p.PermissionName);
@@ -114,15 +120,14 @@
         {
             PermissionSelected.Remove(p.PermissionName);
         }
-
-
     }
+
     protected override async Task OnInitializedAsync()
     {
         var authenticationState = await authStateProvider.GetAuthenticationStateAsync();
         user = authenticationState.User;
         UserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        ReturnUrl = "rolelist";
+        ReturnUrl = "role/list";
 
         role = await
             _authRolesAdmin.QueryRoleToPermissions(UserId).SingleOrDefaultAsync(x => x.RoleName == roleName);
@@ -198,11 +203,21 @@
                 Message = "Please select at least one permission.";
                 return;
             }
-        
+            var dialog = await _dialogService.ShowConfirmationAsync("Are you sure you want to Update?: " + Input.RoleName , "Ok", "No", "Update Data");
+            var dlgresult = await dialog.Result;
+
+            canceled = dlgresult.Cancelled;
+
+            if (canceled == null || (canceled == true))
+            {
+                _dialogService.ShowInfo("Update cancelled", "Update ");
+                return;
+            }
+            IsLoading = true;
 
             var status = await _authRolesAdmin
                         .UpdateRoleToPermissionsAsync(Input.RoleName, PermissionSelected, Input.Description, Input.RoleType);
-
+            IsLoading = false;
             if (status.HasErrors)
             {
                 Message = status.GetAllErrors();

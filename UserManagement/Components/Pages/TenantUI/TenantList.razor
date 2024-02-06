@@ -1,4 +1,5 @@
 ﻿@page "/tenant/tenantlist"
+
 @using AuthPermissions.AdminCode
 @using AuthPermissions.AspNetCore
 @using AuthPermissions.BaseCode.PermissionsCode
@@ -17,23 +18,24 @@
 
 @attribute [HasPermission(UserPermissions.TenantList)]
 
-@inject IAuthTenantAdminService auth;
+@inject IAuthTenantAdminService _authTenantAdmin;
 <FluentButton Type="ButtonType.Button" Appearance="Appearance.Accent" OnClick="CreateTenant">Create new Tenant</FluentButton>
 <br />
-@if (tenantNames == null)
+@if (IsLoading == true)
 {
-    <p><em>Loading...</em></p>
+    <div style="width: 300px; display: grid; grid-gap: 12px; grid-auto-flow: column;">
+        <FluentProgress></FluentProgress>
+    </div>
 }
 else
 {
-
-    <FluentDataGrid Items="@tenantNames" ResizableColumns=true GridTemplateColumns="0.2fr 0.2fr 0.3fr 0.3fr 0.3fr">
-
+    <FluentDataGrid Items="@tenantNames" ResizableColumns=true GridTemplateColumns="0.3fr 0.2fr 0.2fr 0.3fr 0.3fr">
+        <FluentLabel><h6>@Message</h6></FluentLabel>
         <PropertyColumn Property="@(p => p.TenantName)" Sortable="true" />
         <PropertyColumn Property="@(p => p.DataKey)" Sortable="true" />
         <TemplateColumn Title="Tenant Roles?" Align="Align.Start">
             <div>
-                <a href="tenantlist" target="_self" data-toggle="tooltip" title='@string.Join(", ",context.TenantRolesName)'>
+                <a href="tenant/tenantlist" target="_self" data-toggle="tooltip" title='@string.Join(", ",context.TenantRolesName)'>
                     @(context.TenantRolesName.Any() ? $"{context.TenantRolesName.Count} tenant roles" : "No tenant roles")
                 </a>
             </div>
@@ -54,18 +56,16 @@ else
     </FluentDataGrid>
 }
 
-@*
-     <a href="#" data-toggle="tooltip" title='@string.Join(", ", item.TenantRolesName)'>
-                    @(item.TenantRolesName.Any() ? $"{item.TenantRolesName.Count} tenant roles" : "No tenant roles")
-                </a>
 
-*@
+
 
 @code {
-
+    private string? Message = string.Empty;
     private IEnumerable<SingleLevelTenantDto> tenantNamesEnu;
     private IQueryable<SingleLevelTenantDto> tenantNames;
     private System.Security.Claims.ClaimsPrincipal user;
+    bool? canceled;
+    private bool IsLoading = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -75,12 +75,13 @@ else
     }
     private async Task GetData()
     {
-        tenantNamesEnu = await SingleLevelTenantDto.TurnIntoDisplayFormat(auth.QueryTenants())
+        IsLoading = true;
+        tenantNamesEnu = await SingleLevelTenantDto.TurnIntoDisplayFormat(_authTenantAdmin.QueryTenants())
                 .OrderBy(x => x.TenantName)
                 .ToListAsync();
 
         tenantNames = tenantNamesEnu.AsQueryable();
-
+        IsLoading = false;
 
     }
     private async void CreateTenant()
@@ -89,7 +90,7 @@ else
     }
     private async void Edit(int Id)
     {
-        // _navman.NavigateTo($"contactUpdate/{Id}");
+        _navman.NavigateTo($"/tenant/edit/{Id}");
     }
     private async void StartAccess(int Id)
     {
@@ -99,37 +100,29 @@ else
     {
         try
         {
-            // var dialog = await _dialogService.ShowConfirmationAsync("Are you sure you want to Delete?", "Ok", "No", "Delete Data");
-            // var dlgresult = await dialog.Result;
+            var dialog = await _dialogService.ShowConfirmationAsync("Are you sure you want to Delete?", "Ok", "No", "Delete Data");
+            var dlgresult = await dialog.Result;
 
-            // canceled = dlgresult.Cancelled;
+            canceled = dlgresult.Cancelled;
 
-            // if (canceled == null || (canceled == true))
-            // {
-            //     _dialogService.ShowInfo("Delete cancelled", "Delete");
-            //     return;
-            // }
+            if (canceled == null || (canceled == true))
+            {
+                _dialogService.ShowInfo("Delete cancelled", "Delete");
+                return;
+            }
 
+            IsLoading = true;
 
+            var status = await _authTenantAdmin.DeleteTenantAsync(Id);
 
-            // IsLoading = true;
-            // // await Task.Delay(200);
-            // ServiceResponseDTO<bool> result = new();
-            // result = await _contactServices.DeleteAsync(Id);
+            IsLoading = false;
+            if (status.HasErrors)
+            {
+                Message = status.GetAllErrors();
+                return;
+            }
+            StateHasChanged();
 
-            // IsLoading = false;
-
-            // if (result.Success == true)
-            // {
-            //     _dialogService.ShowInfo(result.Message, "Delete");
-            // }
-            // else
-            // {
-            //     _dialogService.ShowWarning(result.Message, "Delete");
-            // }
-            // result = new();
-            // await Loading();
-            // StateHasChanged();
         }
         catch (Exception ex)
         {

@@ -10,6 +10,10 @@
 @using Microsoft.JSInterop
 @using UserManagement
 @using UserManagement.Components
+@using UserManagement.Services
 
 @inject NavigationManager _navman
 @inject IDialogService _dialogService
+@inject IJSRuntime jsruntime
+@inject IToastService _toast;
+@inject NavigationService _navServices;

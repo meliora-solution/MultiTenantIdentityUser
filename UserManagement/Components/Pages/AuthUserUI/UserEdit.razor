@@ -1,0 +1,189 @@
+﻿@page "/user/edit/{userId}"
+@using AuthPermissions.AdminCode
+@using AuthPermissions.AspNetCore
+@using AuthpServices.PermissionsCode
+@using ExamplesCommonCode.CommonAdmin
+@using System.Security.Claims
+
+
+@rendermode InteractiveServer
+@inject IAuthUsersAdminService _authUsersAdmin;
+
+@*
+    @inject AuthenticationStateProvider authStateProvider
+*@
+
+@attribute [HasPermission(UserPermissions.UserChange)]
+
+<FluentIcon Value="@(new Icons.Regular.Size16.ArrowLeft())" Color="Color.Neutral" Slot="start" OnClick="_navServices.GoBack" />
+
+@if (IsLoading == true)
+{
+    <div style="width: 300px; display: grid; grid-gap: 12px; grid-auto-flow: column;">
+        <FluentProgress></FluentProgress>
+    </div>
+}
+<FluentGrid>
+    <FluentGridItem xs="8" sm="4">
+        <FluentLabel><h6>@Message</h6></FluentLabel>
+        <EditForm Model="Input" OnValidSubmit="@OnValidSubmit">
+            <DataAnnotationsValidator />
+            <h2>Edit User : @Input.UserName</h2>
+            <hr />
+            <FluentValidationSummary />
+
+            <FluentStack Orientation="Orientation.Vertical">
+                <FluentTextField Name="Input.Email" @bind-Value="Input.Email" Required="true" Label="Email" Style="width: 100%" />
+                <ValidationMessage For="() => Input.Email" class="text-danger" />
+                <FluentTextField Name="Input.UserName" @bind-Value="Input.UserName" Required="true" Label="User Name" Style="width: 100%" />
+                <ValidationMessage For="() => Input.UserName" class="text-danger" />
+
+                <div style="width:100%;height: 200px; overflow-y: scroll;">
+                    <FluentSelect Items=@stringOptionsRoles
+                                  Label="Select RoleNames"
+                                  TOption="Option<string>"
+                                  Multiple=true
+                                  OptionText="@(i => i.Text)"
+                                  OptionValue="@(i => i.Value)"
+                                  OptionSelected="@(i => i.Selected)"
+                                  @bind-SelectedOptions="@selectedOptionsRoles"
+                                  @bind-Value="@stringValueRoleNames" />
+                </div>
+                <div>
+                    <FluentSelect Items=@stringOptionsTenants
+                                  Label="Select Tenants"
+                                  OptionText="@(i => i.Text)"
+                                  OptionValue="@(i => i.Value)"
+                                  OptionSelected="@(i => i.Selected)"
+                                  @bind-SelectedOption="@selectedOptionsTenants"
+                                  @bind-Value="@stringValueTenants" />
+
+                </div>
+
+
+                <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Update User</FluentButton>
+            </FluentStack>
+        </EditForm>
+
+    </FluentGridItem>
+</FluentGrid>
+
+
+@code {
+    [Parameter]
+    public string? userId { get; set; }
+    private string? Message = string.Empty;
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    SetupManualUserChange Input { get; set; } = new();
+
+    bool? canceled;
+    private bool IsLoading = false;
+    List<Option<string>>? stringOptionsRoles = new();
+    List<string>? RoleNames = new List<string>();
+    string stringValueRoleNames;
+    IEnumerable<Option<string>> selectedOptionsRoles { get; set; } = default!;
+
+    List<Option<string>>? stringOptionsTenants = new();
+    Option<string> selectedOptionsTenants { get; set; } = default!;
+    string? stringValueTenants;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            ReturnUrl = "user/list";
+            var status = await SetupManualUserChange.PrepareForUpdateAsync(userId, _authUsersAdmin);
+            if (status.HasErrors)
+            {
+                Message = status.GetAllErrors();
+            }
+            Input.UserId = userId;
+            Input.Email = status.Result.Email;
+            Input.UserName = status.Result.UserName;
+            Input.TenantName = status.Result.TenantName;
+            Input.RoleNames = status.Result.RoleNames;
+        
+
+            foreach (var item in status.Result.AllTenantNames)
+            {
+
+                stringOptionsTenants?.Add(new Option<string>
+                    {
+                        Value = item,
+                        Text = item,
+                        Selected = (item == Input.TenantName) // You can set this based on your logic
+                    });
+            }
+
+            foreach (var item in status.Result.AllRoleNames)
+            {
+                foreach (var role in status.Result.RoleNames)
+                {
+                    stringOptionsRoles?.Add(new Option<string>
+                        {
+                            Value = item,
+                            Text = item,
+                            Selected = (item == role) // You can set this based on your logic
+                        });
+                }
+
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Message = ex.Message;
+        }
+
+    }
+
+    public async Task OnValidSubmit(EditContext editContext)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(stringValueRoleNames))
+            {
+                Message = "Please select one role.";
+                return;
+            }
+            if (string.IsNullOrEmpty(stringValueTenants))
+            {
+                Message = "Please select a tenant.";
+                return;
+            }
+
+            var dialog = await _dialogService.ShowConfirmationAsync("Are you sure you want to update? : " + Input.TenantName, "Ok", "No", "Update Data");
+            var dlgresult = await dialog.Result;
+
+            canceled = dlgresult.Cancelled;
+
+            if (canceled == null || (canceled == true))
+            {
+                _dialogService.ShowInfo("Update cancelled", "Update");
+                return;
+            }
+            IsLoading = true;
+
+            var status = await _authUsersAdmin.UpdateUserAsync(Input.UserId,
+               Input.Email, Input.UserName, Input.RoleNames, Input.TenantName);
+            
+               IsLoading = false;
+
+            if (status.HasErrors)
+            {
+                Message = status.GetAllErrors();
+                return;
+            }
+      
+            _navman.NavigateTo(ReturnUrl);
+
+        }
+        catch (Exception ex)
+        {
+            Message = ex.Message;
+        }
+    }
+}

@@ -23,6 +23,7 @@ using UserManagement.Components.Account;
 using PartnerCode.AppStart;
 using PartnerCode.Services;
 using ExamplesCommonCode.IdentityCookieCode;
+using UserManagement.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -33,6 +34,9 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddFluentUIComponents();
+
+// Common Services in UserManagement
+builder.Services.AddUserManagementServices();
 
 
 /*Create Tenant , Invite Tenant*/

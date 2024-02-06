@@ -24,9 +24,12 @@
                             <FluentButton Type="ButtonType.Submit" Style="width: 100%;">Logout</FluentButton>
                         </form>
                         <FluentNavGroup Title="Auth Admin" Tooltip="Admin" Icon="@(new Icons.Regular.Size24.EarthLeaf())">
+                            <FluentNavLink Href="user/list" Icon="@(new Icons.Regular.Size20.PeopleCommunity())" Tooltip="User List" 
+                                    IconColor="Color.Accent">User List</FluentNavLink>
+
                             @if (user.HasPermission(UserPermissions.RoleRead))
                         {
-                            <FluentNavLink Href="rolelist" Icon="@(new Icons.Regular.Size20.PeopleCommunity())" Tooltip="Role List" IconColor="Color.Accent">Role List</FluentNavLink>
+                            <FluentNavLink Href="role/list" Icon="@(new Icons.Regular.Size20.PeopleCommunity())" Tooltip="Role List" IconColor="Color.Accent">Role List</FluentNavLink>
                         }
                         @if (user.HasPermission(UserPermissions.PermissionRead))
                         {

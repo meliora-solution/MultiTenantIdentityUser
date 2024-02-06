@@ -1,4 +1,4 @@
-﻿@page "/rolelist"
+﻿@page "/role/list"
 @using AuthPermissions.AdminCode
 @using AuthPermissions.AspNetCore
 @using AuthPermissions.BaseCode.PermissionsCode
@@ -35,7 +35,7 @@
  
         <TemplateColumn Title="#Permission" Align="Align.Start">
              <div>
-                <a href="rolelist" target="_self" data-toggle="tooltip" title='@string.Join(", ",context.PermissionNames)'>
+                <a href="role/list" target="_self" data-toggle="tooltip" title='@string.Join(", ",context.PermissionNames)'>
                     @(context.PermissionNames.Count)
                 </a>
             </div>
