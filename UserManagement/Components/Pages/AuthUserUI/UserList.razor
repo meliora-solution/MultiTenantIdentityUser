@@ -14,8 +14,6 @@
 
 @attribute [HasPermission(UserPermissions.UserRead)]
 
-<FluentButton Type="ButtonType.Button" Appearance="Appearance.Accent"
-              OnClick="Sync">Sync With Authentication provider's users</FluentButton>
 <br />
 
 @if (IsLoading == true)
@@ -32,6 +30,8 @@ else
                         style="height: 580px;overflow:auto;">
             <h2>User List.</h2>
             <FluentLabel><h6>@Message</h6></FluentLabel>
+            <FluentButton Type="ButtonType.Button" Appearance="Appearance.Accent"
+                          OnClick="Sync">Sync With Authentication provider's users</FluentButton>
 
             <PropertyColumn Property="@(c => c.UserName)" Title="User Name" Align="Align.Start" Sortable="true" />
             <PropertyColumn Property="@(c => c.Email)" Title="Email" Align="Align.Start" Sortable="true" />
@@ -66,7 +66,7 @@ else
 
         </FluentDataGrid>
     }
-
+ 
 }
 @code {
     private string? Message = string.Empty;
@@ -77,11 +77,15 @@ else
 
     private async void Sync()
     {
-        if (user.HasPermission(UserPermissions.UserSync))
-        {
-            var syncChanges = await _authUsersAdmin.SyncAndShowChangesAsync();
+        // var syncChanges = await _authUsersAdmin.SyncAndShowChangesAsync();
+        // if (syncChanges.Count() == 0)
+        // {
+        //     Message = "There are no changes to apply to the AuthUsers";
+        //     return;
+        // }
 
-        }
+        _navman.NavigateTo($"/user/sync");
+     
     }
   
     protected async override void OnInitialized()
