@@ -17,6 +17,8 @@ namespace AuthpServices.PermissionsCode
                 "UserRead, UserSync, UserChange, UserRemove, " +
                 "UserRolesChange, RoleRead, RoleChange, PermissionRead, IncludeFilteredPermissions, " +
                 "TenantList, TenantCreate, TenantUpdate, UserChangeTenant, TenantAccessData"),
+           new("App Support", "overall support - limited admin items",
+                "UserRead, UserRolesChange, RoleRead, TenantList, TenantAccessData"),
             //tenant roles
             new("Tenant Admin", "Tenant-level admin",
                 "UserRead, UserRolesChange, RoleRead, InviteUsers", RoleTypes.TenantAdminAdd),
@@ -24,11 +26,12 @@ namespace AuthpServices.PermissionsCode
             new("User Guest", "User-level Guest", "AccessPageLevelOne"),
 
         };
-      
+
         public static readonly List<BulkLoadUserWithRolesTenant> UsersRolesDefinition = new List<BulkLoadUserWithRolesTenant>
         {
             new ("Super@g1.com", null, "SuperAdmin"),
             new ("AppAdmin@g1.com", null, "App Admin"),
+            new("AppSupport@g1.com", null, "App Support"),
 
         };
     }

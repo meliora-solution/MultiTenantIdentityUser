@@ -14,6 +14,9 @@
 
 @attribute [HasPermission(UserPermissions.UserRead)]
 
+<FluentButton Type="ButtonType.Button" Appearance="Appearance.Accent"
+              OnClick="Sync">Sync With Authentication provider's users</FluentButton>
+<br />
 
 @if (IsLoading == true)
 {
@@ -72,8 +75,23 @@ else
     private IQueryable<AuthUserDisplay>? UserToShow;
     private System.Security.Claims.ClaimsPrincipal? user;
 
+    private async void Sync()
+    {
+        if (user.HasPermission(UserPermissions.UserSync))
+        {
+            var syncChanges = await _authUsersAdmin.SyncAndShowChangesAsync();
+
+        }
+    }
+  
     protected async override void OnInitialized()
     {
+        await GetData();
+
+    }
+    private async Task GetData()
+    {
+        IsLoading = true;
         var authenticationState = await authStateProvider.GetAuthenticationStateAsync();
         user = authenticationState.User;
         var authDataKey = user.GetAuthDataKeyFromUser();
@@ -81,8 +99,9 @@ else
         UserToShow = (AuthUserDisplay.TurnIntoDisplayFormat(userQuery.OrderBy(x => x.Email)).ToList()).AsQueryable();
 
 
-    }
+        IsLoading = false;
 
+    }
     private async void Edit(string userId)
     {
         _navman.NavigateTo($"/user/edit/{userId}");
@@ -102,18 +121,18 @@ else
                 _dialogService.ShowInfo("Delete cancelled", "Delete");
                 return;
             }
+            
             IsLoading = true;
-            // var status = await _authRolesAdmin.DeleteRoleAsync(RoleName, true);
+            var status = await _authUsersAdmin.DeleteUserAsync(userId);
+            IsLoading = false;
 
-            // IsLoading = false;
-            // if (status.HasErrors)
-            // {
-            //     Message = status.GetAllErrors();
-            //     return;
-            // }
-
-            // GetPermission();
-            // StateHasChanged();
+            if (status.HasErrors)
+            {
+                Message = status.GetAllErrors();
+                return;
+            }
+            await GetData();
+            StateHasChanged();
         }
         catch (Exception ex)
         {

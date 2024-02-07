@@ -121,6 +121,7 @@ else
                 Message = status.GetAllErrors();
                 return;
             }
+            await GetData();
             StateHasChanged();
 
         }

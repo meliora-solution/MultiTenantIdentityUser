@@ -105,7 +105,7 @@
             Input.UserName = status.Result.UserName;
             Input.TenantName = status.Result.TenantName;
             Input.RoleNames = status.Result.RoleNames;
-        
+
 
             foreach (var item in status.Result.AllTenantNames)
             {
@@ -165,10 +165,31 @@
                 _dialogService.ShowInfo("Update cancelled", "Update");
                 return;
             }
+            
             IsLoading = true;
+            string tenant = selectedOptionsTenants?.Value;
 
+            stringValueRoleNames = selectedOptionsRoles != null ? string.Join(',', selectedOptionsRoles.Select(o => o.Value)) : "";
+            RoleNames = new List<string>();
+
+            int rolecount = selectedOptionsRoles.Count();
+
+            foreach (var item in selectedOptionsRoles)
+            {
+                if (rolecount > 1)
+                {
+                    if (item.Value != "< none >")
+                    {
+                        RoleNames.Add(item.Value);
+                    }
+                }
+                else
+                {
+                    RoleNames.Add(item.Value);
+                }
+            }
             var status = await _authUsersAdmin.UpdateUserAsync(Input.UserId,
-               Input.Email, Input.UserName, Input.RoleNames, Input.TenantName);
+               Input.Email, Input.UserName, RoleNames, tenant);
             
                IsLoading = false;
 
