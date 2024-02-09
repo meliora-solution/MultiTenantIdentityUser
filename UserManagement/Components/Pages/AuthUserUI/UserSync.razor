@@ -102,18 +102,10 @@ else
         dialog = await _dialogService.ShowInfoAsync(status.Message);
         dlgresult = await dialog.Result;
 
-        //_dialogService.ShowInfo(status.Message, "Update");
+     
         _navServices.GoBack();
 
 
-        /*
-         Sync successful: NoChange = 0, Create = 2, Update = 0, Delete = 0.
-        if (status.HasErrors)
-            return RedirectToAction(nameof(ErrorDisplay),
-                new { errorMessage = status.GetAllErrors() });
-
-        return RedirectToAction(nameof(Index), new { message = status.Message });
-         */
 
     }
 }

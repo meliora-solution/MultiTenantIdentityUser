@@ -120,17 +120,15 @@
 
             foreach (var item in status.Result.AllRoleNames)
             {
-                foreach (var role in status.Result.RoleNames)
-                {
-                    stringOptionsRoles?.Add(new Option<string>
-                        {
-                            Value = item,
-                            Text = item,
-                            Selected = (item == role) // You can set this based on your logic
-                        });
-                }
-
+                stringOptionsRoles?.Add(new Option<string>
+                    {
+                        Value = item,
+                        Text = item,
+                        Selected = Input.RoleNames.Contains(item) // You can set this based on your logic
+                    });
             }
+
+
 
         }
         catch (Exception ex)
@@ -165,7 +163,7 @@
                 _dialogService.ShowInfo("Update cancelled", "Update");
                 return;
             }
-            
+
             IsLoading = true;
             string tenant = selectedOptionsTenants?.Value;
 
@@ -190,15 +188,15 @@
             }
             var status = await _authUsersAdmin.UpdateUserAsync(Input.UserId,
                Input.Email, Input.UserName, RoleNames, tenant);
-            
-               IsLoading = false;
+
+            IsLoading = false;
 
             if (status.HasErrors)
             {
                 Message = status.GetAllErrors();
                 return;
             }
-      
+
             _navman.NavigateTo(ReturnUrl);
 
         }

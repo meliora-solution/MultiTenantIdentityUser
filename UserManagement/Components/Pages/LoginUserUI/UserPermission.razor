@@ -1,0 +1,27 @@
+﻿@page "/LoginUser/permissions"
+@using AuthPermissions.BaseCode.PermissionsCode
+
+@inject IUsersPermissionsService service
+
+@inject IHttpContextAccessor httpContextAccessor
+
+@if (ListPermission != null)
+{
+    <FluentDataGrid Items="@ListPermission" ResizableColumns=true GridTemplateColumns="0.3fr "
+                    style="height: 500px;overflow:auto;">
+        <h2>List of permissions for user @httpContextAccessor.HttpContext.User.Identity.Name</h2>
+        <TemplateColumn Title="Your Permission" Align="Align.Start">
+            <FluentLabel>@context</FluentLabel>
+        </TemplateColumn>
+
+    </FluentDataGrid>
+}
+@code {
+    private System.Security.Claims.ClaimsPrincipal user;
+    private IQueryable<string> ListPermission;
+
+    protected override void OnInitialized()
+    {
+          ListPermission =  (service.PermissionsFromUser(httpContextAccessor.HttpContext.User)).AsQueryable();
+    }
+}
