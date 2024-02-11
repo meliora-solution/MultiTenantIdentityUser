@@ -1,11 +1,8 @@
 ## Authp multitenant UserManagement with Blazor 8
 
-This project aims to establish a unified user identity for multitenant environments across multiple projects. The implementation relies on the AuthPermissions.AspNetCore library developed by John P Smith, available at https://github.com/JonPSmith/AuthPermissions.AspNetCore.
+This project aims to establish a unified user identity for multitenant environments across multiple projects. The implementation relies on the AuthPermissions.AspNetCore library developed by John P Smith, available at https://github.com/JonPSmith/AuthPermissions.AspNetCore. UserManagement, webApi and WebApp are custom implementation of the library.
 
-* One of the challenges I encountered while implementing the AuthP library is understanding and adapting MVC code to Blazor.
-* English is not my native language, so please forgive any grammar errors or sentences that may not be entirely correct.
+To See Blazor version example3 of the library see authpExample Folder. 
 
-
-Please see this wiki documentation [Unified User Identity with Authp for Multitenant Blazor Applications](https://github.com/meliora-solution/MultiTenantIdentityUser/wiki).
 
 
