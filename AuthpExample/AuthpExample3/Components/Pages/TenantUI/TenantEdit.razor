@@ -1,0 +1,137 @@
+﻿@page "/tenant/edit/{Id:int}"
+
+<h3>TanantEdit</h3>
+
+@using System.ComponentModel.DataAnnotations
+@using AuthPermissions.AdminCode
+@using AuthpExample3.Components.Account.Shared
+@using AuthpExample3.Services
+@using Example3.MvcWebApp.IndividualAccounts.Models
+
+@rendermode InteractiveServer
+
+@inject IAuthTenantAdminService _authTenantAdmin
+@inject NavigationService _navServices;
+
+<FluentIcon Value="@(new Icons.Regular.Size16.ArrowLeft())" Color="Color.Neutral" Slot="start" OnClick="_navServices.GoBack" />
+@if (IsLoading == true)
+{
+    <div style="width: 300px; display: grid; grid-gap: 12px; grid-auto-flow: column;">
+        <FluentProgress></FluentProgress>
+    </div>
+}
+<FluentGrid>
+    <FluentGridItem xs="8" sm="4">
+        <FluentLabel><h6>@Message</h6></FluentLabel>
+        <EditForm Model="Input" OnValidSubmit="@Edit">
+            <DataAnnotationsValidator />
+            <h2>Edit Tenant.</h2>
+            <hr />
+            <FluentValidationSummary />
+            <FluentStack Orientation="Orientation.Vertical">
+                <FluentTextField Name="Input.TenantName" @bind-Value="Input.TenantName" Required="true" Label="Tenant Name" Style="width: 100%" />
+                <ValidationMessage For="() => Input.TenantName" class="text-danger" />
+
+                <div style="width:100%;height: 200px; overflow-y: scroll;">
+                    <FluentSelect Items=@stringOptionsRoles
+                                  Label="Select RoleNames"
+                                  TOption="Option<string>"
+                                  Multiple=true
+                                  OptionText="@(i => i.Text)"
+                                  OptionValue="@(i => i.Value)"
+                                  OptionSelected="@(i => i.Selected)"
+                                  @bind-SelectedOptions="@selectedOptionsRoles"
+                                  @bind-Value="@stringValueRoleNames" />
+                </div>
+                <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Style="width: 100%">Create Tenant</FluentButton>
+            </FluentStack>
+        </EditForm>
+    </FluentGridItem>
+</FluentGrid>
+@code {
+    private string? Message = string.Empty;
+    [Parameter]
+    public int Id { get; set; } // TenantId
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+    List<Option<string>>? stringOptionsRoles = new();
+    List<string>? RoleNames = new List<string>();
+
+    string stringValueRoleNames;
+
+    IEnumerable<Option<string>> selectedOptionsRoles { get; set; }
+    bool? canceled;
+    private bool IsLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        SingleLevelTenantDto tenant = await SingleLevelTenantDto.SetupForUpdateAsync(_authTenantAdmin, Id);
+
+        Input.TenantName = tenant.TenantName;
+        RoleNames = tenant.TenantRolesName;
+
+
+        foreach (var item in RoleNames)
+        {
+            stringOptionsRoles?.Add(new Option<string>
+                {
+                    Value = item,
+                    Text = item,
+                    Selected = true // You can set this based on your logic
+                });
+        }
+
+        ReturnUrl = "/tenant/tenantlist";
+    }
+
+    public async Task Edit()
+    {
+
+
+        try
+        {
+            var dialog = await _dialogService.ShowConfirmationAsync("Are you sure you want to update? : " + Input.TenantName , "Ok", "No", "Update Data");
+            var dlgresult = await dialog.Result;
+
+            canceled = dlgresult.Cancelled;
+
+            if (canceled == null || (canceled == true))
+            {
+                _dialogService.ShowInfo("Update cancelled", "Update");
+                return;
+            }
+            IsLoading = true;
+
+            var status = await _authTenantAdmin.UpdateTenantNameAsync(Id, Input.TenantName);
+            IsLoading = false;
+
+            if (status.HasErrors)
+            {
+                Message = status.GetAllErrors();
+                return;
+            }
+
+            _navman.NavigateTo(ReturnUrl);
+        }
+        catch (Exception ex)
+        {
+            Message = ex.Message;
+        }
+
+    }
+
+
+    private sealed class InputModel
+    {
+        [Required]
+        [Display(Name = "tenantName")]
+        public string TenantName { get; set; } = "";
+
+
+
+
+    }
+}

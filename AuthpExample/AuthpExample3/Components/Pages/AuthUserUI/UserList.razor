@@ -1,0 +1,141 @@
+﻿@page "/user/list"
+
+@using AuthPermissions.AdminCode
+@using AuthPermissions.AspNetCore
+@using AuthPermissions.BaseCode.CommonCode
+@using AuthPermissions.BaseCode.PermissionsCode
+@using Example3.MvcWebApp.IndividualAccounts.PermissionsCode
+@using ExamplesCommonCode.CommonAdmin
+
+@rendermode InteractiveServer
+
+@inject IAuthUsersAdminService _authUsersAdmin
+@inject AuthenticationStateProvider authStateProvider
+
+@attribute [HasPermission(Example3Permissions.UserRead)]
+
+<br />
+
+@if (IsLoading == true)
+{
+    <div style="width: 300px; display: grid; grid-gap: 12px; grid-auto-flow: column;">
+        <FluentProgress></FluentProgress>
+    </div>
+}
+else
+{
+    @if (UserToShow != null)
+    {
+        <FluentDataGrid Items="@UserToShow" ResizableColumns=true GridTemplateColumns="0.2fr 0.2fr 0.3fr 0.3fr 0.2fr 0.2fr"
+                        style="height: 580px;overflow:auto;">
+            <h2>User List.</h2>
+            <FluentLabel><h6>@Message</h6></FluentLabel>
+            <FluentButton Type="ButtonType.Button" Appearance="Appearance.Accent"
+                          OnClick="Sync">Sync With Authentication provider's users</FluentButton>
+
+            <PropertyColumn Property="@(c => c.UserName)" Title="User Name" Align="Align.Start" Sortable="true" />
+            <PropertyColumn Property="@(c => c.Email)" Title="Email" Align="Align.Start" Sortable="true" />
+            <TemplateColumn Title="AuthRoles" Align="Align.Start">
+
+                @(context.RoleNames.Any() ? string.Join(", ", context.RoleNames) : "<none>")
+
+            </TemplateColumn>
+
+            <TemplateColumn Title="Tenant?" Align="Align.Start" Sortable="true">
+                <div>
+                    <a href="user/list" target="_self" data-toggle="tooltip" title='@context.TenantName'>
+                        @(context.HasTenant ? "YES" : "")
+                    </a>
+                </div>
+
+            </TemplateColumn>
+
+            <TemplateColumn Title="Change" Align="Align.Start">
+                @if (user.HasPermission(Example3Permissions.UserChange))
+                {
+                    <FluentButton IconStart="@(new Icons.Regular.Size20.Edit())" BackgroundColor="var(--inherit-bg)"
+                                  Color="var(--error)" Title="Edit" OnClick="@(() => Edit(context.UserId))" />
+
+                }
+                @if (user.HasPermission(Example3Permissions.UserRemove))
+                {
+                    <FluentButton IconStart="@(new Icons.Regular.Size20.Delete())" BackgroundColor="var(--inherit-bg)"
+                                  Color="var(--danger)" Title="Delete" OnClick="@(() => Delete(context.UserId))" />
+                }
+            </TemplateColumn>
+
+        </FluentDataGrid>
+    }
+ 
+}
+@code {
+    private string? Message = string.Empty;
+    bool? canceled;
+    private bool IsLoading = false;
+    private IQueryable<AuthUserDisplay>? UserToShow;
+    private System.Security.Claims.ClaimsPrincipal? user;
+
+    private async void Sync()
+    {
+       _navman.NavigateTo($"/user/sync");
+     
+    }
+  
+    protected async override void OnInitialized()
+    {
+        await GetData();
+
+    }
+    private async Task GetData()
+    {
+        IsLoading = true;
+        var authenticationState = await authStateProvider.GetAuthenticationStateAsync();
+        user = authenticationState.User;
+        var authDataKey = user.GetAuthDataKeyFromUser();
+        var userQuery = _authUsersAdmin.QueryAuthUsers(authDataKey);
+        UserToShow = (AuthUserDisplay.TurnIntoDisplayFormat(userQuery.OrderBy(x => x.Email)).ToList()).AsQueryable();
+
+
+        IsLoading = false;
+
+    }
+    private async void Edit(string userId)
+    {
+        _navman.NavigateTo($"/user/edit/{userId}");
+    }
+    private async void Delete(string userId)
+    {
+        try
+        {
+
+            var dialog = await _dialogService.ShowConfirmationAsync("Are you sure you want to Delete?", "Ok", "No", "Delete Data");
+            var dlgresult = await dialog.Result;
+
+            canceled = dlgresult.Cancelled;
+
+            if (canceled == null || (canceled == true))
+            {
+                _dialogService.ShowInfo("Delete cancelled", "Delete");
+                return;
+            }
+            
+            IsLoading = true;
+            var status = await _authUsersAdmin.DeleteUserAsync(userId);
+            IsLoading = false;
+
+            if (status.HasErrors)
+            {
+                Message = status.GetAllErrors();
+                return;
+            }
+            await GetData();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Message = ex.Message;
+            return;
+        }
+    }
+
+}

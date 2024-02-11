@@ -1,0 +1,111 @@
+﻿@page "/user/sync"
+@using AuthPermissions.AdminCode
+@using AuthPermissions.AspNetCore
+@using Example3.MvcWebApp.IndividualAccounts.PermissionsCode
+
+@rendermode InteractiveServer
+@attribute [HasPermission(Example3Permissions.UserRead)]
+@inject IAuthUsersAdminService _authUsersAdmin
+
+<FluentIcon Value="@(new Icons.Regular.Size16.ArrowLeft())" Color="Color.Neutral" Slot="start" OnClick="_navServices.GoBack" />
+
+@if (IsLoading == true)
+{
+    <div style="width: 300px; display: grid; grid-gap: 12px; grid-auto-flow: column;">
+        <FluentProgress></FluentProgress>
+    </div>
+}
+else
+{
+    @if (IsVisible)
+    {
+        @if (Input != null)
+        {
+            <FluentDataGrid Items="@Input" ResizableColumns=true GridTemplateColumns="0.2fr 0.2fr 0.3fr 0.3fr 0.2fr "
+                            style="height: 380px;overflow:auto;">
+                <h2>Changes needed based on authentication provider's users</h2>
+
+                <FluentLabel><h6>@Message</h6></FluentLabel>
+                <PropertyColumn Property="@(c => c.FoundChangeType)" Title="Change Type" Align="Align.Start" Sortable="true" />
+                <PropertyColumn Property="@(c => c.Email)" Title="Email" Align="Align.Start" Sortable="true" />
+                <PropertyColumn Property="@(c => c.UserName)" Title="User Name" Align="Align.Start" Sortable="true" />
+                <PropertyColumn Property="@(c => c.NumRoles)" Title="Roles Count" Align="Align.Start" Sortable="true" />
+                <PropertyColumn Property="@(c => c.HasTenant)" Title="Has Tenant" Align="Align.Start" Sortable="true" />
+
+            </FluentDataGrid>
+            <FluentButton Type="ButtonType.Button" OnClick="Sycn" Appearance="Appearance.Accent">Apply Sync Changes</FluentButton>
+        }
+    }
+    else
+    {
+        <FluentLabel><h6>@Message</h6></FluentLabel>
+    }
+
+
+}
+
+
+
+@code {
+    private bool IsLoading = false;
+    private string? Message = string.Empty;
+    private bool IsVisible = true;
+
+    IQueryable<SyncAuthUserWithChange> Input { get; set; }
+    List<SyncAuthUserWithChange> syncChanges { get; set; } = new();
+    bool? canceled;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+
+            IsLoading = true;
+
+
+            Input = (await _authUsersAdmin.SyncAndShowChangesAsync()).AsQueryable();
+
+            IsLoading = false;
+            if (Input.Count() == 0)
+            {
+                IsVisible = false;
+
+                Message = "There are no changes to apply to the AuthUsers";
+            }
+            StateHasChanged();
+        }
+    }
+
+    private async void Sycn()
+    {
+
+        var dialog = await _dialogService.ShowConfirmationAsync("Are you sure you want to update? : ", "Ok", "No", "Update Data");
+        var dlgresult = await dialog.Result;
+
+        canceled = dlgresult.Cancelled;
+
+        if (canceled == null || (canceled == true))
+        {
+            _dialogService.ShowInfo("Update cancelled", "Update");
+            return;
+        }
+
+        IsLoading = true;
+
+        var status = await _authUsersAdmin.ApplySyncChangesAsync(Input);
+        IsLoading = false;
+        if (status.HasErrors)
+        {
+            Message = status.GetAllErrors();
+            return;
+        }
+        dialog = await _dialogService.ShowInfoAsync(status.Message);
+        dlgresult = await dialog.Result;
+
+     
+        _navServices.GoBack();
+
+
+
+    }
+}
