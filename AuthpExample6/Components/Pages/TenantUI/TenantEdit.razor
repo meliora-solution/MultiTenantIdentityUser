@@ -1,0 +1,113 @@
+﻿@page "/tenant/edit/{Id:int}"
+
+<h3>TanantEdit</h3>
+
+@using System.ComponentModel.DataAnnotations
+@using AuthPermissions.AdminCode
+@* @using AuthpServices.Models *@
+@using AuthPermissions.AspNetCore
+@using AuthpExample6.Components.Account.Shared
+@using AuthpExample6.Services
+@using Example6.MvcWebApp.Sharding.Models
+@using Example6.MvcWebApp.Sharding.PermissionsCode
+
+@rendermode InteractiveServer
+@attribute [HasPermission(Example6Permissions.TenantUpdate)]
+
+@inject IAuthTenantAdminService _authTenantAdmin
+@inject NavigationService _navServices;
+
+<FluentIcon Value="@(new Icons.Regular.Size16.ArrowLeft())" Color="Color.Neutral" Slot="start" OnClick="_navServices.GoBack" />
+@if (IsLoading == true)
+{
+    <div style="width: 300px; display: grid; grid-gap: 12px; grid-auto-flow: column;">
+        <FluentProgress></FluentProgress>
+    </div>
+}
+<FluentGrid>
+    <FluentGridItem xs="8" sm="4">
+        <FluentLabel><h6>@Message</h6></FluentLabel>
+        <EditForm Model="Input" OnValidSubmit="@Edit">
+            <DataAnnotationsValidator />
+            <h2>Edit Tenant.</h2>
+            <hr />
+            <FluentValidationSummary />
+            <FluentStack Orientation="Orientation.Vertical">
+                <FluentTextField Name="Input.TenantName" @bind-Value="Input.TenantName" Required="true" Label="Tenant Name" Style="width: 100%" />
+                <ValidationMessage For="() => Input.TenantName" class="text-danger" />
+                <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Style="width: 100%">Update Tenant</FluentButton>
+            </FluentStack>
+        </EditForm>
+    </FluentGridItem>
+</FluentGrid>
+@code {
+    private string? Message = string.Empty;
+    [Parameter]
+    public int Id { get; set; } // TenantId
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+   
+    bool? canceled;
+    private bool IsLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        HybridShardingTenantDto tenant = await HybridShardingTenantDto.SetupForUpdateAsync(_authTenantAdmin, Id);
+
+        Input.TenantName = tenant.TenantName;
+    
+
+        ReturnUrl = "/tenant/tenantlist";
+    }
+
+    public async Task Edit()
+    {
+
+
+        try
+        {
+            var dialog = await _dialogService.ShowConfirmationAsync("Are you sure you want to update? : " + Input.TenantName , "Ok", "No", "Update Data");
+            var dlgresult = await dialog.Result;
+
+            canceled = dlgresult.Cancelled;
+
+            if (canceled == null || (canceled == true))
+            {
+                _dialogService.ShowInfo("Update cancelled", "Update");
+                return;
+            }
+            IsLoading = true;
+
+            var status = await _authTenantAdmin.UpdateTenantNameAsync(Id, Input.TenantName);
+            IsLoading = false;
+
+            if (status.HasErrors)
+            {
+                Message = status.GetAllErrors();
+                return;
+            }
+
+            _navman.NavigateTo(ReturnUrl);
+        }
+        catch (Exception ex)
+        {
+            Message = ex.Message;
+        }
+
+    }
+
+
+    private sealed class InputModel
+    {
+        [Required]
+        [Display(Name = "tenantName")]
+        public string TenantName { get; set; } = "";
+
+
+
+
+    }
+}

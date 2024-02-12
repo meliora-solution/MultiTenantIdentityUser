@@ -1,0 +1,76 @@
+﻿@page "/LoginUser/authuserinfo"
+@using AuthPermissions.AdminCode
+@using System.Security.Claims
+@using AuthPermissions.BaseCode.DataLayer.Classes
+@using ExamplesCommonCode.CommonAdmin
+
+@inject IAuthUsersAdminService service
+@inject IHttpContextAccessor httpContextAccessor
+
+@inject AuthenticationStateProvider authStateProvider
+
+<h2>The AuthUser's info</h2>
+
+@if (userDisplay != null)
+{
+    
+    <div>
+        <hr />
+        <dl class="row">
+            <dt class="col-sm-12">
+                UserName: 
+            </dt>
+            <dd class="col-sm-10">
+                @userDisplay.UserName
+            </dd>
+            <dt class="col-sm-2">
+                Email:
+            </dt>
+            <dd class="col-sm-10">
+                @userDisplay.Email
+            </dd>
+            <dt class="col-sm-2">
+                Role Name:
+            </dt>
+            <dd class="col-sm-10">
+           
+                @(userDisplay.RoleNames.Any() ? string.Join(", ", userDisplay.RoleNames) : "<none>")
+            </dd>
+            <dt class="col-sm-2">
+                Tenant Name:
+            </dt>
+            <dd class="col-sm-10">
+                @userDisplay.TenantName
+            </dd>
+
+
+        </dl>
+    </div>
+}
+ 
+@code {
+    private System.Security.Claims.ClaimsPrincipal? user;
+    private string? userId { get; set; }
+    AuthUserDisplay userDisplay;
+    private string? Message = string.Empty;
+    protected override async Task OnInitializedAsync()
+    {
+         var authenticationState = await authStateProvider.GetAuthenticationStateAsync();
+
+
+
+        bool IsAuthenticated = httpContextAccessor.HttpContext.User.Identity.IsAuthenticated;
+        if (!IsAuthenticated)
+
+        {
+            return;
+        }
+        user = authenticationState.User;
+        userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var status = await service.FindAuthUserByUserIdAsync(userId);
+        userDisplay = AuthUserDisplay.DisplayUserInfo(status.Result);
+
+    }
+  
+
+}

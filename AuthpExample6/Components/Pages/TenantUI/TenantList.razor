@@ -1,0 +1,140 @@
+﻿@page "/tenant/tenantlist"
+
+@using AuthPermissions.AdminCode
+@using AuthPermissions.AspNetCore
+@using AuthPermissions.BaseCode.PermissionsCode
+
+@using Example6.MvcWebApp.Sharding.Models
+@using Example6.MvcWebApp.Sharding.PermissionsCode
+@using Microsoft.EntityFrameworkCore
+
+
+<h3>Tenant List</h3>
+
+<PageTitle>TenantList</PageTitle>
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+@rendermode InteractiveServer
+
+@attribute [HasPermission(Example6Permissions.TenantList)]
+
+@inject IAuthTenantAdminService _authTenantAdmin;
+<FluentButton Type="ButtonType.Button" Appearance="Appearance.Accent" OnClick="CreateTenant">Create new Tenant</FluentButton>
+<br />
+@if (IsLoading == true)
+{
+    <div style="width: 300px; display: grid; grid-gap: 12px; grid-auto-flow: column;">
+        <FluentProgress></FluentProgress>
+    </div>
+}
+else
+{
+    <FluentDataGrid Items="@tenantNames" ResizableColumns=true GridTemplateColumns="0.3fr 0.1fr 0.2fr 0.1fr 0.2fr 0.1fr">
+        <FluentLabel><h6>@Message</h6></FluentLabel>
+        <PropertyColumn Property="@(p => p.TenantName)" Title="Tenant Name" Sortable="true" />
+        <PropertyColumn Property="@(p => p.DataKey)" Sortable="true" />
+        <PropertyColumn Property="@(p => p.ShardingName)" Title="Sharding Name" Sortable="true" />
+        <PropertyColumn Property="@(p => p.HasOwnDb)" Title="Own Db?" Sortable="true" />
+
+     @*    <TemplateColumn Title="Tenant Roles?" Align="Align.Start">
+            <div>
+                <a href="tenant/tenantlist" target="_self" data-toggle="tooltip" title='@string.Join(", ",context.TenantRolesName)'>
+                    @(context.TenantRolesName.Any() ? $"{context.TenantRolesName.Count} tenant roles" : "No tenant roles")
+                </a>
+            </div>
+
+        </TemplateColumn> *@
+
+        <TemplateColumn Title="Change" Align="Align.Start">
+            @if (user.HasPermission(Example6Permissions.TenantUpdate))
+            {
+                <FluentButton IconStart="@(new Icons.Regular.Size20.Edit())" BackgroundColor="var(--inherit-bg)" Color="var(--error)" Title="Edit" OnClick="@(() => Edit(context.TenantId))" />
+                <FluentButton IconStart="@(new Icons.Regular.Size20.Delete())" BackgroundColor="var(--inherit-bg)" Color="var(--danger)" Title="Delete" OnClick="@(() => Delete(context.TenantId))" />
+            }
+            @if (user.HasPermission(Example6Permissions.MoveTenantDatabase))
+            {
+                <FluentButton IconStart="@(new Icons.Regular.Size20.TableMoveAbove())" BackgroundColor="var(--inherit-bg)" Color="var(--error)" Title="Move DB" OnClick="@(() => MoveDB(context.TenantId))" />
+                
+            }
+        </TemplateColumn>
+    </FluentDataGrid>
+}
+
+
+
+
+@code {
+    private string? Message = string.Empty;
+    private IEnumerable<HybridShardingTenantDto> tenantNamesEnu;
+    private IQueryable<HybridShardingTenantDto> tenantNames;
+    private System.Security.Claims.ClaimsPrincipal user;
+    bool? canceled;
+    private bool IsLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        user = authenticationState.User;
+        await GetData();
+    }
+    private async Task GetData()
+    {
+        IsLoading = true;
+        tenantNamesEnu = await HybridShardingTenantDto.TurnIntoDisplayFormat(_authTenantAdmin.QueryTenants())
+                .OrderBy(x => x.TenantName)
+                .ToListAsync();
+
+        tenantNames = tenantNamesEnu.AsQueryable();
+        IsLoading = false;
+
+    }
+    private async void CreateTenant()
+    {
+        _navman.NavigateTo($"/tenant/create");
+    }
+    private async void Edit(int Id)
+    {
+        _navman.NavigateTo($"/tenant/edit/{Id}");
+    }
+    private async void MoveDB(int Id)
+    {
+        _navman.NavigateTo($"/tenant/MoveDatabase/{Id}");
+    }
+    private async void Delete(int Id)
+    {
+        try
+        {
+            var dialog = await _dialogService.ShowConfirmationAsync("Are you sure you want to Delete?", "Ok", "No", "Delete Data");
+            var dlgresult = await dialog.Result;
+
+            canceled = dlgresult.Cancelled;
+
+            if (canceled == null || (canceled == true))
+            {
+                _dialogService.ShowInfo("Delete cancelled", "Delete");
+                return;
+            }
+
+            IsLoading = true;
+
+            var status = await _authTenantAdmin.DeleteTenantAsync(Id);
+
+            IsLoading = false;
+            if (status.HasErrors)
+            {
+                Message = status.GetAllErrors();
+                return;
+            }
+            await GetData();
+            StateHasChanged();
+
+        }
+        catch (Exception ex)
+        {
+            // string msg = ex.Message;
+            // IsLoading = false;
+            return;
+        }
+    }
+}

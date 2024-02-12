@@ -1,0 +1,41 @@
+﻿@page "/role/permissionlist"
+
+@using AuthPermissions.AdminCode
+@using AuthPermissions.AspNetCore
+@using AuthPermissions.BaseCode.PermissionsCode
+@using Example6.MvcWebApp.Sharding.PermissionsCode
+
+<h3>Permission List</h3>
+
+@rendermode InteractiveServer
+
+@attribute [HasPermission(Example6Permissions.PermissionRead)]
+
+@inject IAuthRolesAdminService _authRolesAdmin;
+
+
+
+@if (Permissions != null)
+{
+    <FluentDataGrid Items="@Permissions" ResizableColumns=true GridTemplateColumns="0.2fr 0.2fr 0.3fr 0.3fr"
+                    style="height: 580px;overflow:auto;">
+        <PropertyColumn Property="@(c => c.GroupName)" Title="Group" Align="Align.Start" Sortable="true" />
+        <PropertyColumn Property="@(c => c.ShortName)" Title="ShortName" Align="Align.Start" Sortable="true" />
+        <PropertyColumn Property="@(c => c.Description)" Title="Description" Align="Align.Start" Sortable="false" />
+        <PropertyColumn Property="@(c => c.PermissionName)" Title="Permission" Align="Align.Start" Sortable="false" />
+
+    </FluentDataGrid>
+}
+
+
+@code {
+    private IQueryable<PermissionDisplay>? Permissions;
+
+    protected override void OnInitialized()
+    {
+        Permissions = (_authRolesAdmin.GetPermissionDisplay(false)).AsQueryable();
+    }
+
+   
+
+}

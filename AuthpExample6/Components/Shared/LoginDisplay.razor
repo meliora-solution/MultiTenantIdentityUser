@@ -1,0 +1,37 @@
+﻿
+@using Microsoft.AspNetCore.Components.Authorization
+ @rendermode InteractiveServer
+<AuthorizeView>
+    <Authorized>
+        <i>@context.User.Identity.Name.Trim()</i>
+        <form action="Account/Logout" method="post">
+            <AntiforgeryToken />
+            <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+            <FluentButton BackgroundColor="var(--inherit-bg)" Title="Logout" Type="ButtonType.Submit" Style="width: 100%;">
+                <FluentIcon Value="@(new Icons.Regular.Size24.LockOpen())" Color="Color.Lightweight" Slot="start" />
+            </FluentButton>
+           </form>
+
+      
+
+    </Authorized>
+    <NotAuthorized>
+           <FluentButton BackgroundColor="var(--inherit-bg)" Title="Login" OnClick="@(() => GetLink())">
+            <FluentIcon Value="@(new Icons.Regular.Size24.LockClosed())" Color="Color.Lightweight" Slot="start" />
+        </FluentButton>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code{
+    string? selectValue;
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+    [SupplyParameterFromQuery]
+    private string? currentUrl { get; set; }
+
+    private void GetLink()
+    {
+        _navman.NavigateTo("/Account/Login");
+    }
+    
+}

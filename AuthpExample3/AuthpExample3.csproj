@@ -6,9 +6,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-AuthpExample3-9ce3e331-965c-476d-8f65-4f783ee39f0d</UserSecretsId>
   </PropertyGroup>
-	<!--<ItemGroup>
+	<ItemGroup>
 		<PackageReference Include="AuthPermissions.AspNetCore" Version="6.1.0" />
-	</ItemGroup>-->
+	</ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.*-*" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.*-*" />
@@ -20,12 +20,7 @@
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.*-* " />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AuthpLibrary\AuthPermissions.AspNetCore\AuthPermissions.AspNetCore.csproj" />
-    <ProjectReference Include="..\AuthpLibrary\AuthPermissions.BaseCode\AuthPermissions.BaseCode.csproj" />
-    <ProjectReference Include="..\AuthpLibrary\AuthPermissions.SupportCode\AuthPermissions.SupportCode.csproj" />
-    <ProjectReference Include="..\AuthpLibrary\AuthPermissions\AuthPermissions.csproj" />
-    <ProjectReference Include="..\AuthpLibrary\Example3.InvoiceCode\Example3.InvoiceCode.csproj" />
-    <ProjectReference Include="..\AuthpLibrary\ExamplesCommonCode\ExamplesCommonCode.csproj" />
-   
+    <ProjectReference Include="..\AuthpLibrary6.1.0\Example3.InvoiceCode\Example3.InvoiceCode.csproj" />
+    <ProjectReference Include="..\AuthpLibrary6.1.0\ExamplesCommonCode\ExamplesCommonCode.csproj" />
   </ItemGroup>
 </Project>

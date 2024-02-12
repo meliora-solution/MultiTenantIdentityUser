@@ -1,0 +1,22 @@
+{
+  "ShardingDatabases": [
+    {
+      "Name": "Default Database",
+      "DatabaseName": null,
+      "ConnectionName": "DefaultConnection",
+      "DatabaseType": "SqlServer"
+    },
+    {
+      "Name": "DatabaseWest1",
+      "DatabaseName": "asp.net-Example6.Sharding_West1",
+      "ConnectionName": "WestCoastServer",
+      "DatabaseType": "SqlServer"
+    },
+    {
+      "Name": "DatabaseEast1",
+      "DatabaseName": "asp.net-Example6.Sharding_East1",
+      "ConnectionName": "EastCoastServer",
+      "DatabaseType": "SqlServer"
+    }
+  ]
+}

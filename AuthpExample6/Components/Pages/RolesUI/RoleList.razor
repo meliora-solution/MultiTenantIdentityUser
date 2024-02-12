@@ -1,0 +1,123 @@
+﻿@page "/role/list"
+@using AuthPermissions.AdminCode
+@using AuthPermissions.AspNetCore
+@using AuthPermissions.BaseCode.PermissionsCode
+@using Example6.MvcWebApp.Sharding.PermissionsCode
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+
+
+<h3>Role List</h3>
+
+@rendermode InteractiveServer
+
+@attribute [HasPermission(Example6Permissions.RoleRead)]
+@inject IAuthRolesAdminService _authRolesAdmin
+@inject AuthenticationStateProvider authStateProvider
+
+<FluentButton Type="ButtonType.Button" Appearance="Appearance.Accent" OnClick="Create">Create Role</FluentButton>
+@if (IsLoading == true)
+{
+    <div style="width: 300px; display: grid; grid-gap: 12px; grid-auto-flow: column;">
+        <FluentProgress></FluentProgress>
+    </div>
+}
+
+@if (RoleToPermissionDisplay != null)
+{
+    <FluentDataGrid Items="@RoleToPermissionDisplay" ResizableColumns=true GridTemplateColumns="0.2fr 0.5fr 0.2fr 0.2fr 0.2fr 0.1fr"
+                    style="height: 580px;overflow:auto;">
+        <FluentLabel><h6>@Message</h6></FluentLabel>
+
+        <PropertyColumn Property="@(c => c.RoleName)" Title="RoleName" Align="Align.Start" Sortable="true" />
+        <PropertyColumn Property="@(c => c.Description)" Title="Description" Align="Align.Start" Sortable="true" />
+        <PropertyColumn Property="@(c => c.RoleType)" Title="RoleType" Align="Align.Start" Sortable="false" />
+ 
+        <TemplateColumn Title="#Permission" Align="Align.Start">
+             <div>
+                <a href="role/list" target="_self" data-toggle="tooltip" title='@string.Join(", ",context.PermissionNames)'>
+                    @(context.PermissionNames.Count)
+                </a>
+            </div>
+        
+        </TemplateColumn>
+        <TemplateColumn Title="Change" Align="Align.Start">
+            @if (user.HasPermission(Example6Permissions.RoleChange))
+            {
+                <FluentButton IconStart="@(new Icons.Regular.Size20.Edit())" BackgroundColor="var(--inherit-bg)" Color="var(--error)" Title="Edit" OnClick="@(() => Edit(context.RoleName))" />
+                <FluentButton IconStart="@(new Icons.Regular.Size20.Delete())" BackgroundColor="var(--inherit-bg)" Color="var(--danger)" Title="Delete" OnClick="@(() => Delete(context.RoleName))" />
+            }
+           
+        </TemplateColumn>
+
+    </FluentDataGrid>
+}
+
+
+@code {
+    private string? Message = string.Empty;
+    private string? UserId { get; set; }
+    private System.Security.Claims.ClaimsPrincipal user;
+    private IQueryable<RoleWithPermissionNamesDto>? RoleToPermissionDisplay;
+    bool? canceled;
+    private bool IsLoading = false;
+
+    protected async override void OnInitialized()
+    {
+        var authenticationState = await authStateProvider.GetAuthenticationStateAsync();
+        user = authenticationState.User;
+        UserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        GetPermission();
+    }
+    void GetPermission()
+    {
+        RoleToPermissionDisplay = (_authRolesAdmin.QueryRoleToPermissions(UserId).OrderBy(x => x.RoleType).ToList()).AsQueryable();
+
+    }
+    private async void Create()
+    {
+        _navman.NavigateTo($"/role/create");
+    }
+    private async void Edit(string roleName)
+    {
+        _navman.NavigateTo($"/role/edit/{roleName}" );
+    }
+    private async void Delete(string RoleName)
+    {
+        try
+        {
+           
+            var dialog = await _dialogService.ShowConfirmationAsync("Are you sure you want to Delete?", "Ok", "No", "Delete Data");
+            var dlgresult = await dialog.Result;
+
+            canceled = dlgresult.Cancelled;
+
+            if (canceled == null || (canceled == true))
+            {
+                _dialogService.ShowInfo("Delete cancelled", "Delete");
+                return;
+            }
+            IsLoading = true;
+            var status = await _authRolesAdmin.DeleteRoleAsync(RoleName, true);
+
+            IsLoading = false;
+            if (status.HasErrors)
+            {
+                Message = status.GetAllErrors();
+                return;
+            }
+
+            GetPermission();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Message  = ex.Message;
+            return;
+        }
+    }
+  
+
+
+}

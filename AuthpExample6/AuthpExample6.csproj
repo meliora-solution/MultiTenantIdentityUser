@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>aspnet-AuthpExample6-9ce3e331-965c-476d-8f65-4f783ee39f0d</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Remove="Components\Pages\TenantUI\DatabaseList.razor" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AuthPermissions.AspNetCore" Version="6.2.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.*-*" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.*-*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.*-*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.*-*" />
+  </ItemGroup>
+  <ItemGroup>
+	<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.*-* " />
+    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.*-* " />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Components\Pages\TenantUI\DatabaseList.razor" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AuthpLibrary6.1.0\Example6.SingleLevelSharding\Example6.SingleLevelSharding.csproj" />
+    <ProjectReference Include="..\AuthpLibrary6.1.0\ExamplesCommonCode\ExamplesCommonCode.csproj" />
+  </ItemGroup>
+</Project>
