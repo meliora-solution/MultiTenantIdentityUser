@@ -1,0 +1,55 @@
+﻿@page "/tenant/databaselist"
+@using AuthPermissions.AspNetCore
+@using AuthPermissions.AspNetCore.ShardingServices
+@using Example6.MvcWebApp.Sharding.PermissionsCode
+
+<h3>List databases with tenants</h3>
+@rendermode InteractiveServer
+
+@attribute [HasPermission(Example6Permissions.ListDbsWithTenants)]
+
+@inject IGetSetShardingEntries shardingService
+
+<FluentIcon Value="@(new Icons.Regular.Size16.ArrowLeft())" Title="Go Back" Color="Color.Neutral" Slot="start" OnClick="_navServices.GoBack" />
+
+@if (IsLoading == true)
+{
+    <div style="width: 300px; display: grid; grid-gap: 12px; grid-auto-flow: column;">
+        <FluentProgress></FluentProgress>
+    </div>
+}
+else
+{
+    <FluentDataGrid Items="@ShardingDbList" ResizableColumns=true GridTemplateColumns="0.3fr 0.1fr 0.1fr 0.1fr">
+        <FluentLabel><h6>@Message</h6></FluentLabel>
+        <PropertyColumn Property="@(p => p.shardingName)" Title="Sharding Name" Sortable="true" />
+        <PropertyColumn Property="@(p => p.hasOwnDb)" Title="Own Db?" Sortable="true" />
+        <TemplateColumn Title="#Tenants" Align="Align.Start">
+            <div>
+                <a href="tenant/databaselist" target="_self" data-toggle="tooltip" title='@string.Join(", ",context.tenantNames)'>
+                    @(context.tenantNames.Count)
+                </a>
+            </div>
+
+        </TemplateColumn>
+    </FluentDataGrid>
+
+ 
+}
+
+@code {
+    private bool IsLoading = false;
+    private string? Message = string.Empty;
+
+    private IQueryable<(string shardingName, bool? hasOwnDb, List<string> tenantNames)> ShardingDbList;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+  
+        ShardingDbList = (await shardingService.GetShardingsWithTenantNamesAsync()).AsQueryable();
+
+    }
+
+
+}

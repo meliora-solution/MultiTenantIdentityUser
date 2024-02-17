@@ -1,12 +1,17 @@
 ﻿@page "/tenant/create"
 
-@using System.ComponentModel.DataAnnotations
 @using AuthPermissions.AdminCode
-@using AuthpExample6.Components.Account.Shared
-@using AuthpExample6.Services
+@using AuthPermissions.AspNetCore
+@using AuthPermissions.AspNetCore.ShardingServices
+@using AuthPermissions.BaseCode
+@using Example6.MvcWebApp.Sharding.Models
+@using Example6.MvcWebApp.Sharding.PermissionsCode
 
 @rendermode InteractiveServer
+@attribute [HasPermission(Example6Permissions.TenantCreate)]
 
+@inject IGetSetShardingEntries shardingService
+@inject AuthPermissionsOptions authOptions
 @inject IAuthTenantAdminService _authTenantAdmin
 @inject NavigationService _navServices;
 
@@ -24,17 +29,15 @@
                 <FluentTextField Name="Input.TenantName" @bind-Value="Input.TenantName" Required="true" Label="Tenant Name" Style="width: 100%" />
                 <ValidationMessage For="() => Input.TenantName" class="text-danger" />
 
-                <div style="width:100%;height: 200px; overflow-y: scroll;">
-                    <FluentSelect Items=@stringOptionsRoles
-                                  Label="Select RoleNames"
-                                  TOption="Option<string>"
-                                  Multiple=true
-                                  OptionText="@(i => i.Text)"
-                                  OptionValue="@(i => i.Value)"
-                                  OptionSelected="@(i => i.Selected)"
-                                  @bind-SelectedOptions="@selectedOptionsRoles"
-                                  @bind-Value="@stringValueRoleNames" />
-                </div>
+                <FluentSelect Items=@stringOptionsShardingNames
+                              Label="Select Sharding Names"
+                              OptionText="@(i => i.Text)"
+                              OptionValue="@(i => i.Value)"
+                              OptionSelected="@(i => i.Selected)"
+                              @bind-SelectedOption="@selectedOptionsSharding"
+                              @bind-Value="@stringValueShardingNames" />
+                <FluentSwitch @bind-Value=Input.HasOwnDb Label=" Has Own Database?" />
+
                 <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Style="width: 100%">Create Tenant</FluentButton>
             </FluentStack>
         </EditForm>
@@ -44,24 +47,35 @@
     private string? Message = string.Empty;
 
     [SupplyParameterFromForm]
-    private InputModel Input { get; set; } = new();
+    private HybridShardingTenantDto Input { get; set; } = new();
+
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
-    List<Option<string>>? stringOptionsRoles = new();
-    List<string>? RoleNames = new List<string>();
+    bool hasOwnDb = false;
+    bool? canceled;
+    private bool IsLoading = false;
 
-    string stringValueRoleNames;
+    List<Option<string>>? stringOptionsShardingNames = new();
+    // List<string>? RoleNames = new List<string>();
 
-    IEnumerable<Option<string>> selectedOptionsRoles { get; set; }
+    string stringValueShardingNames;
 
-  
+    Option<string> selectedOptionsSharding { get; set; }
+    List<string> AllShardingEntries { get; set; } = new();
+
+
     protected override async Task OnInitializedAsync()
     {
-        List<string>? AllPossibleRoleNames = await _authTenantAdmin.GetRoleNamesForTenantsAsync();
+        Message = string.Empty;
+        Input = HybridShardingTenantDto.SetupForCreate(authOptions,
+            shardingService.GetAllShardingEntries().Select(x => x.Name).ToList());
 
-        foreach (var item in AllPossibleRoleNames)
+        AllShardingEntries = Input.AllShardingEntries;
+
+
+        foreach (var item in AllShardingEntries)
         {
-            stringOptionsRoles?.Add(new Option<string>
+            stringOptionsShardingNames?.Add(new Option<string>
                 {
                     Value = item,
                     Text = item,
@@ -72,29 +86,18 @@
 
     public async Task Create()
     {
-        // A service (method AddSingleTenantAsync) needed the ITenantChangeService service, but you haven't registered it.
-        // You can do this using the RegisterTenantChangeService configuration method.
-
-        stringValueRoleNames = selectedOptionsRoles != null ? string.Join(',', selectedOptionsRoles.Select(o => o.Value)) : "";
-        if (string.IsNullOrEmpty(stringValueRoleNames))
-        {
-            Message = "Please select at least one role.";
-            return;
-        }
-        RoleNames = new List<string>();
-        if (selectedOptionsRoles != null)
-        {
-            foreach (var item in selectedOptionsRoles)
-            {
-                RoleNames.Add(item.Value);
-
-            }
-        }
-        
         try
         {
-           var status = await _authTenantAdmin.AddSingleTenantAsync(Input.TenantName, RoleNames);
+            if (string.IsNullOrEmpty(stringValueShardingNames))
+            {
+                Message = "Please select one Sharding Name.";
+                return;
+            }
+            Input.ShardingName = stringValueShardingNames;
 
+            // var status = await _authTenantAdmin.AddSingleTenantAsync(Input.TenantName, RoleNames);
+            var status = await _authTenantAdmin.AddSingleTenantAsync(Input.TenantName, null,
+                Input.HasOwnDb, Input.ShardingName);
             if (status.HasErrors)
             {
                 Message = status.GetAllErrors();
@@ -105,18 +108,5 @@
         {
             Message =ex.Message;
         }
-
-    }
-
-
-    private sealed class InputModel
-    {
-        [Required]
-        [Display(Name = "tenantName")]
-        public string TenantName { get; set; } = "";
-
-
-
-
     }
 }

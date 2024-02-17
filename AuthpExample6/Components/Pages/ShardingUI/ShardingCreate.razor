@@ -1,0 +1,158 @@
+﻿@page "/sharding/create"
+
+@using AuthPermissions.AspNetCore
+@using AuthPermissions.AspNetCore.ShardingServices
+@using Example6.MvcWebApp.Sharding.Models
+@using Example6.MvcWebApp.Sharding.PermissionsCode
+
+@attribute [HasPermission(Example6Permissions.UpdateDatabaseInfo)]
+@inject IGetSetShardingEntries _shardingService
+
+@rendermode InteractiveServer
+<FluentIcon Value="@(new Icons.Regular.Size16.ArrowLeft())" Color="Color.Neutral" Slot="start" OnClick="_navServices.GoBack" />
+@if (IsLoading == true)
+{
+    <div style="width: 300px; display: grid; grid-gap: 12px; grid-auto-flow: column;">
+        <FluentProgress></FluentProgress>
+    </div>
+}
+<FluentGrid>
+    <FluentGridItem xs="8" sm="4">
+        <FluentLabel><h6>@Message</h6></FluentLabel>
+        <EditForm Model="Input" OnValidSubmit="@OnValidSubmit">
+            <h2>
+                Create a new sharding entry
+            </h2>
+            <hr />
+            <FluentStack Orientation="Orientation.Vertical">
+                <FluentTextField Name="DatabaseInfo" @bind-Value="@DatabaseInfo" Required="true" Label="Database Info" Style="width: 100%" />
+                <FluentTextField Name="DatabaseName" @bind-Value="@DatabaseName" Required="true" Label="Database Name" Style="width: 100%" />
+
+                <FluentSelect Items=@stringOptionsConns
+                              Label="Select Connection Name"
+                              OptionText="@(i => i.Text)"
+                              OptionValue="@(i => i.Value)"
+                              OptionSelected="@(i => i.Selected)"
+                              @bind-SelectedOption="@selectedOptionsConn"
+                              @bind-Value="@stringValueConnNames" />
+
+                <FluentSelect Items=@stringOptionsDbTypes
+                              Label="Select Database Type"
+                              OptionText="@(i => i.Text)"
+                              OptionValue="@(i => i.Value)"
+                              OptionSelected="@(i => i.Selected)"
+                              @bind-SelectedOption="@selectedOptionsDbType"
+                              @bind-Value="@stringValueDbType" />
+
+                <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Update</FluentButton>
+            </FluentStack>
+        </EditForm>
+    </FluentGridItem>
+</FluentGrid>
+@code {
+    [Parameter]
+    public string? dbinfo { get; set; }
+    public string? Message { get; set; } = string.Empty;
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    ShardingEntryEdit Input { get; set; } = new();
+    bool? canceled;
+    private bool IsLoading = false;
+
+    private string DatabaseName { get; set; } = string.Empty;
+    private string DatabaseInfo { get; set; } = string.Empty;
+    List<Option<string>>? stringOptionsConns = new();
+    List<string>? ConnNames = new List<string>();
+    string stringValueConnNames;
+    Option<string> selectedOptionsConn = default!;
+
+    List<Option<string>>? stringOptionsDbTypes = new();
+    List<string>? DbType = new List<string>();
+    string stringValueDbType;
+    Option<string> selectedOptionsDbType = default!;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        ReturnUrl = "sharding/list";
+
+        Input = new ShardingEntryEdit
+            {
+                AllPossibleConnectionNames = _shardingService.GetConnectionStringNames(),
+                PossibleDatabaseTypes = _shardingService.PossibleDatabaseProviders
+            };
+
+        // if (Input.DatabaseInfo == null)
+        // {
+        //     Message = $"Could not find a sharding entry with the name {dbinfo}.";
+        // }
+
+        var conns = Input.AllPossibleConnectionNames;
+        //string connName = Input.DatabaseInfo.ConnectionName;
+
+        foreach (var item in conns)
+        {
+            stringOptionsConns?.Add(new Option<string>
+                {
+                    Value = item,
+                    Text = item,
+                    Selected = false //(item == connName)
+                });
+        }
+
+        var DbTypes = Input.PossibleDatabaseTypes;
+        // string dbtypeName = Input.DatabaseInfo.DatabaseType;
+
+        foreach (var item in DbTypes)
+        {
+            stringOptionsDbTypes?.Add(new Option<string>
+                {
+                    Value = item,
+                    Text = item,
+                    Selected = false //(item == dbtypeName)
+                });
+        }
+
+    }
+    public async Task OnValidSubmit(EditContext editContext)
+    {
+        try
+        {
+
+            if (string.IsNullOrEmpty(stringValueConnNames))
+            {
+                Message = "Please select one Connection.";
+                return;
+            }
+            if (string.IsNullOrEmpty(stringValueDbType))
+            {
+                Message = "Please select one database type.";
+                return;
+            }
+
+            var DbInfo = new ShardingEntry();
+
+            DbInfo.Name = DatabaseInfo;
+            DbInfo.DatabaseName = DatabaseName;
+            DbInfo.ConnectionName = stringValueConnNames;
+            DbInfo.DatabaseType = stringValueDbType;
+
+     
+            var status = _shardingService.AddNewShardingEntry(DbInfo);
+
+            if (status.HasErrors)
+            {
+                Message = status.GetAllErrors();
+                return;
+            }
+
+           
+        }
+        catch (Exception ex)
+        {
+            Message = ex.Message;
+        }
+     
+    }
+}

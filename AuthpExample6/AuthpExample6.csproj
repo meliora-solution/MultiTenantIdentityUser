@@ -8,10 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="Components\Pages\TenantUI\DatabaseList.razor" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="AuthPermissions.AspNetCore" Version="6.2.2" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.*-*" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.*-*" />
@@ -21,9 +17,6 @@
   <ItemGroup>
 	<PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.*-* " />
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.*-* " />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Components\Pages\TenantUI\DatabaseList.razor" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AuthpLibrary6.1.0\Example6.SingleLevelSharding\Example6.SingleLevelSharding.csproj" />

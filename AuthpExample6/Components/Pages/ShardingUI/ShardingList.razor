@@ -1,0 +1,120 @@
+﻿@page "/sharding/list"
+
+@using AuthPermissions.AspNetCore
+@using AuthPermissions.AspNetCore.ShardingServices
+@using AuthPermissions.BaseCode.PermissionsCode
+@using Example6.MvcWebApp.Sharding.PermissionsCode
+@using System.Text
+
+
+<h3>List sharding entries</h3>
+
+@rendermode InteractiveServer
+
+@attribute [HasPermission(Example6Permissions.ListDatabaseInfos)]
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+@inject IGetSetShardingEntries _shardingService
+<FluentButton Type="ButtonType.Button" Appearance="Appearance.Accent" OnClick="AddNewDbInfo">Add New Db Info</FluentButton>
+@if (IsLoading == true)
+{
+    <div style="width: 300px; display: grid; grid-gap: 12px; grid-auto-flow: column;">
+        <FluentProgress></FluentProgress>
+    </div>
+}
+else
+{
+    <FluentDataGrid Items="@shardingEntry" ResizableColumns=true GridTemplateColumns="0.2fr 0.2fr 0.2fr 0.2fr 0.2fr">
+        
+        <FluentLabel><h6>@Message</h6></FluentLabel>
+
+        <PropertyColumn Property="@(p => p.Name)" Title="Database Info" Sortable="true" />
+        <PropertyColumn Property="@(p => p.ConnectionName)" Title="Connection Name" Sortable="true" />
+        <PropertyColumn Property="@(p => p.DatabaseName ?? "-uses db in connection-")" Title="Database Name" Sortable="true" />
+        <PropertyColumn Property="@(p => p.DatabaseType)" Title="Database Type" Sortable="true" />
+
+        <TemplateColumn Title="Change" Align="Align.Start">
+            @if (user.HasPermission(Example6Permissions.UpdateDatabaseInfo))
+            {
+                <FluentButton IconStart="@(new Icons.Regular.Size20.Edit())" BackgroundColor="var(--inherit-bg)" Color="var(--error)" Title="Edit" OnClick="@(() => Edit(context.Name))" />
+
+            }
+            @if (user.HasPermission(Example6Permissions.MoveTenantDatabase))
+            {
+                <FluentButton IconStart="@(new Icons.Regular.Size20.Delete())" BackgroundColor="var(--inherit-bg)" Color="var(--error)" Title="Move DB" OnClick="@(() => Remove(context.Name))" />
+            }
+        </TemplateColumn>
+    </FluentDataGrid>
+
+
+}
+@code {
+    private bool IsLoading = false;
+    private string? Message = string.Empty;
+    private System.Security.Claims.ClaimsPrincipal user;
+    bool? canceled;
+    private IQueryable<ShardingEntry> shardingEntry;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        user = authenticationState.User;
+        shardingEntry = (_shardingService.GetAllShardingEntries()).AsQueryable();
+    }
+    private async void AddNewDbInfo()
+    {
+        _navman.NavigateTo($"/sharding/create");
+    }
+    private async void Edit(string Name)
+    {
+        _navman.NavigateTo($"/sharding/edit/{Name}");
+    }
+    private async void Remove(string Name)
+    {
+        try
+        {
+
+            var dialogMessage = new StringBuilder();
+
+            dialogMessage.Append($"Remove the ( '{Name}' ) ");
+            dialogMessage.AppendLine(" sharding entry?. ");
+            dialogMessage.AppendLine(@"Are you sure you want to remove this?. NOTE: This does not delete the database. 
+                                      It just takes that database out of use.");
+
+            var dialog = await _dialogService.ShowConfirmationAsync(dialogMessage.ToString(), "Ok", "No", "Delete Data");
+
+
+            var dlgresult = await dialog.Result;
+
+            canceled = dlgresult.Cancelled;
+
+            if (canceled == null || (canceled == true))
+            {
+                _dialogService.ShowInfo("Delete cancelled", "Delete");
+                return;
+            }
+
+            IsLoading = true;
+
+
+            var status = _shardingService.RemoveShardingEntry(Name);
+            IsLoading = false;
+
+            if (status.HasErrors)
+            {
+                Message = status.GetAllErrors();
+                StateHasChanged();
+                return;
+            }
+            shardingEntry = (_shardingService.GetAllShardingEntries()).AsQueryable();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Message = ex.Message;
+            return;
+        }
+    }
+
+
+}

@@ -30,22 +30,23 @@
                         {
                             <FluentNavLink Href="role/list" Icon="@(new Icons.Regular.Size20.PeopleCommunity())" Tooltip="Role List" IconColor="Color.Accent">Role List</FluentNavLink>
                         }
-                        @if (user.HasPermission(Example6Permissions.PermissionRead))
-                        {
-                            <FluentNavLink Href="role/permissionlist" Icon="@(new Icons.Regular.Size20.PeopleCommunity())" Tooltip="Permission List" IconColor="Color.Accent">Permission List</FluentNavLink>
-                        }
                         @if (user.HasPermission(Example6Permissions.TenantList))
                         {
                             <FluentNavLink Href="tenant/tenantlist" Icon="@(new Icons.Regular.Size20.PeopleCommunity())" Tooltip="Tenant List" IconColor="Color.Accent">Tenant List</FluentNavLink>
                         }
-                        @if (user.HasPermission(Example6Permissions.TenantCreate))
+                        @if (user.HasPermission(Example6Permissions.ListDbsWithTenants))
                         {
-                            <FluentNavLink Href="tenantCreate" Icon="@(new Icons.Regular.Size20.PeopleCommunityAdd())" Tooltip="Create Tenant" IconColor="Color.Accent">Tenant Create</FluentNavLink>
-                         }
-                        @if (user.HasPermission(Example6Permissions.InviteUsers))
+                            <FluentNavLink Href="tenant/databaselist" Icon="@(new Icons.Regular.Size20.PeopleCommunity())" Tooltip="List dbs with Tenant" IconColor="Color.Accent">Dbs List with Tenant</FluentNavLink>
+                        }
+                        @if (user.HasPermission(Example6Permissions.ListDatabaseInfos))
                         {
-                            <FluentNavLink Href="inviteUser" Icon="@(new Icons.Regular.Size20.PeopleCommunityAdd())" Tooltip="Invite User" IconColor="Color.Accent">Invite User</FluentNavLink>
-                         }
+                            <FluentNavLink Href="sharding/list" Icon="@(new Icons.Regular.Size20.PeopleCommunity())" Tooltip="List sharding entries" IconColor="Color.Accent">List Sharding Entries</FluentNavLink>
+                        }
+                        @if (user.HasPermission(Example6Permissions.PermissionRead))
+                        {
+                            <FluentNavLink Href="role/permissionlist" Icon="@(new Icons.Regular.Size20.PeopleCommunity())" Tooltip="Permission List" IconColor="Color.Accent">Permission List</FluentNavLink>
+                        }
+           
                     </FluentNavGroup>
                     <FluentNavGroup Title="Users Info" Tooltip="Login User Info" Icon="@(new Icons.Regular.Size24.EarthLeaf())">
                         <FluentNavLink Href="/LoginUser/permissions" Icon="@(new Icons.Regular.Size20.PeopleCommunityAdd())" 
